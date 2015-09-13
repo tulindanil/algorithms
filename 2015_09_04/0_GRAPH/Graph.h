@@ -79,7 +79,7 @@ public:
         TConstEdgeIterator &operator++ ();
 
     };
-
+    
     TConstEdgeIterator GetVertexNeighboursBegin(const TNode&) const;
     TConstEdgeIterator GetVertexNeighboursEnd(const TNode&) const;
 
@@ -87,4 +87,9 @@ public:
     bool AddEdge(const TNode&, const TNode&, const float weight);
 
     TGraph<TNode> transposedGraph() const;
+    
+    std::pair<std::map<TNode, float>, std::map<TNode, TNode>> dijkstra(const TNode &sourceVertex) const;
+    
+    template <typename T>
+    friend std::ostream &operator <<(std::ostream &os, const TGraph<T> &g);
 };

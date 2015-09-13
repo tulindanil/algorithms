@@ -1,5 +1,7 @@
 #include "graph.h"
 
+#include <cfloat>
+
 #pragma mark - Graph
 
 template <typename TNode>
@@ -220,4 +222,64 @@ typename TGraph<TNode>::TConstEdgeIterator TGraph<TNode>::GetVertexNeighboursEnd
     throw std::runtime_error("bad vertex");
 }
 
+#pragma mark - Algotithms
 
+template <typename T>
+std::pair<std::map<T, float>, std::map<T, T>> TGraph<T>::dijkstra(const T &sourceVertex) const
+{
+    std::map<T, float> destinations;
+    std::map<T, T> paths;
+    
+    destinations[sourceVertex] = 0;
+    std::set<std::pair<float, T>> queue;
+    
+    for (auto vertex = this->GetVerticesBegin(); vertex != this->GetVerticesEnd(); ++vertex)
+    {
+        if (sourceVertex != *vertex)
+            destinations[*vertex] = FLT_MAX / 2;
+        
+        queue.insert(std::make_pair(destinations[*vertex], *vertex));
+    }
+    
+    while (queue.empty() == false)
+    {
+        std::pair<float, T> pair = *queue.begin();
+        queue.erase(queue.begin());
+        
+        for (auto edge = this->GetVertexNeighboursBegin(pair.second); edge != this->GetVertexNeighboursEnd(pair.second); ++edge)
+        {
+            float alternativeWeight = pair.first + edge->weight;
+            if (alternativeWeight < destinations[edge->Destination])
+            {
+                std::pair<float, T> dst = *queue.find(std::make_pair(destinations[edge->Destination], edge->Destination));
+                queue.erase(dst);
+                
+                destinations[edge->Destination] = alternativeWeight;
+                dst.first = alternativeWeight;
+                
+                queue.insert(std::make_pair(destinations[edge->Destination], edge->Destination));
+                
+                paths[edge->Destination] = pair.second;
+            }
+        }
+    }
+    return std::make_pair(destinations, paths);
+}
+
+#pragma mark - operator <<
+
+template <typename TNode>
+std::ostream &operator <<(std::ostream &os, const TGraph<TNode> &g)
+{
+    for (auto pair: g.Adjacencies)
+    {
+        os << pair.first << ":" << std::endl;
+        for (auto neighbour: pair.second)
+        {
+            os << neighbour.first << "(" << neighbour.second << ")" << ", ";
+        }
+        os << std::endl;
+    }
+//
+    return os;
+}
