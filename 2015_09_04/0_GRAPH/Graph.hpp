@@ -445,7 +445,7 @@ TGraph<std::set<T> > TGraph<T>::condensation() const
 template <typename TNode>
 std::ostream &operator <<(std::ostream &os, const TGraph<TNode> &g)
 {
-    for (typename TGraph<TNode>::TAdjacencies::const_iterator pair = g.Adjacencies.begin(); pair != g.Adjacenciesend(); ++pair)
+    for (typename TGraph<TNode>::TAdjacencies::const_iterator pair = g.Adjacencies.begin(); pair != g.Adjacencies.end(); ++pair)
     {
         os << pair->first << ":" << std::endl;
         for (typename TGraph<TNode>::TAdjValue::const_iterator neighbour = pair->second.begin(); neighbour != pair->second.end(); ++neighbour)
