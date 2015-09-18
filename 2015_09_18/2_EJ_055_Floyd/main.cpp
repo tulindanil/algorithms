@@ -3,8 +3,12 @@
 #include <vector>
 #include <algorithm>
 #include <cmath>
+#include <set>
 
 #include <Graph.hpp>
+
+#define find(x) find_(cities, *x)
+#define _find(x) find_(cities, x)
 
 template<typename T>
 std::istream &operator >>(std::istream &in, TGraph<T> &g)
@@ -41,22 +45,25 @@ std::istream &operator >>(std::istream &in, TGraph<T> &g)
 };
 
 template <typename T>
-std::ostream &operator <<(std::ostream &out, std::vector<std::vector<T>> &matrix)
+std::istream &operator >>(std::istream &in, std::pair<T, T> &p)
 {
-    for (auto i: matrix)
-    {
-        for (auto j: i)
-        {
-            out << ((j != FLT_MAX) ? j : 0) << " ";
+    in >> p.first;
+    in >> p.second;
+    return in;
+}
+
+int find_( const std::vector<std::pair<float, float>>& where, std::pair<float, float> searchParameter )
+{
+    for( int i = 0; i < where.size(); i++ ) {
+        if( where[i] == searchParameter ) {
+            return i;
         }
-        out << std::endl;
     }
-    
-    return out;
+    return -1;
 }
 
 template <typename T>
-void work(const TGraph<T> &g)
+std::vector<std::vector<float>> work(const TGraph<T> &g, const std::vector<std::pair<float, float> > &cities)
 {
     std::vector<std::vector<float>> matrix;
     
@@ -73,34 +80,76 @@ void work(const TGraph<T> &g)
     {
         for (typename TGraph<T>::TConstEdgeIterator edge = g.GetVertexNeighboursBegin(*vertex); edge != g.GetVertexNeighboursEnd(*vertex); ++edge)
         {
-            matrix[*vertex][edge->Destination] = edge->weight;
+            matrix[find_(cities, *vertex)][find_(cities, edge->Destination)] = edge->weight;
         }
     }
     
-    std::cout << matrix;
-    
-    for (size_t k = 0; k < g.size(); ++k)
+    for (typename TGraph<T>::TConstVertexIterator k = g.GetVerticesBegin(); k != g.GetVerticesEnd(); ++k)
     {
-        for (size_t i = 0; i < g.size(); ++i)
+        for (typename TGraph<T>::TConstVertexIterator i = g.GetVerticesBegin(); i != g.GetVerticesEnd(); ++i)
         {
-            for (size_t j = 0; j < g.size(); ++j)
+            for (typename TGraph<T>::TConstVertexIterator j = g.GetVerticesBegin(); j != g.GetVerticesEnd(); ++j)
             {
-                matrix[i][j] = min(matrix[i][j], matrix[i][k] + matrix[k][j]);
+                matrix[find(i)][find(j)] = min(matrix[find(i)][find(j)], matrix[find(i)][find(k)] + matrix[find(k)][find(j)]);
             }
         }
     }
     
-    std::cout << matrix;
+    return matrix;
 }
 
 int main()
 {
     std::fstream f("input.txt");
     
-    TGraph<int> g;
+    size_t qty = 0;
+    std::cin >> qty;
     
-    f >> g;
-    work(g);
+    float distance = 0;
+    std::cin >> distance;
+    
+    std::pair<float, float> A, B, C;
+    std::cin >> A >> B;
+    
+    std::vector<std::pair<float, float> > cities;
+    
+    for (size_t i = 2; i < qty; i++)
+    {
+        std::pair<float, float> p;
+        std::cin >> p;
+        
+        if (p.first < 0 && p.second < 0)
+            C = p;
+        
+        cities.push_back(p);
+    }
+    
+    cities.push_back(A);
+    cities.push_back(B);
+    
+    TGraph<std::pair<float, float> > g;
+    
+    for (typename std::vector<std::pair<float, float>>::const_iterator p1 = cities.begin(); p1 != cities.end(); ++p1)
+    {
+        g.AddVertex(*p1);
+        for (typename std::vector<std::pair<float, float>>::const_iterator p2 = cities.begin(); p2 != cities.end(); ++p2)
+        {
+            if (p1 == p2)
+                continue;
+            
+            g.AddVertex(*p2);
+            
+            float dist = pow(p1->first - p2->first, 2) + pow(p1->second - p2->second, 2);
+            if (dist < pow(distance, 2))
+            {
+                g.AddEdge(*p1, *p2, sqrt(dist));
+            }
+        }
+    }
+    
+    std::vector<std::vector<float>> m = work(g, cities);
+    
+    std::cout << m[_find(A)][_find(C)] + m[_find(C)][_find(B)] << std::endl;
     
     return 0;
 }
