@@ -1,6 +1,4 @@
-//#include "Graph.hpp"
 #include <iostream>
-#include <fstream>
 #include <istream>
 #include <set>
 #include <map>
@@ -16,9 +14,9 @@ std::ostream &operator <<(std::ostream &os, const std::pair<T, K> &pair)
 template <typename T>
 std::ostream &operator <<(std::ostream &os, const std::set<T> &set)
 {
-    for (auto it: set)
+    for (typename std::set<T>::const_iterator it = set.begin(); it != set.end(); ++it)
     {
-        os << it << ", ";
+        os << *it << ", ";
     }
     return os;
 }
@@ -26,9 +24,9 @@ std::ostream &operator <<(std::ostream &os, const std::set<T> &set)
 template <typename T, typename K>
 std::ostream &operator <<(std::ostream &os, const std::map<T, K> &map)
 {
-    for (auto it: map)
+    for (typename std::map<T, K>::const_iterator it = map.begin(); it != map.end(); ++it)
     {
-        os << it.first << " " << it.second << "; ";
+        os << it->first << " " << it->second << "; ";
     }
     return os;
 }
@@ -70,6 +68,8 @@ void work(TGraph<T> &g)
     std::map<condensed_type, std::pair<size_t, size_t> > dfs_result = condensation.DFS();
     std::set<std::pair<size_t, condensed_type> > schedule;
     
+    std::cout << dfs_result << std::endl;
+    
     for (typename std::map<condensed_type, std::pair<size_t, size_t> >::const_iterator it = dfs_result.begin(); it != dfs_result.end(); ++it)
     {
         schedule.insert(std::make_pair(it->second.second, it->first));
@@ -100,8 +100,7 @@ int main()
     
     TGraph<int> g;
     
-    std::ifstream fstream("input.txt");
-    fstream >> g;
+    std::cin >> g;
     
     work(g);
     

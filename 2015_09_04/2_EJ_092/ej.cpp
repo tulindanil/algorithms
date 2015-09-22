@@ -101,12 +101,12 @@ public:
     
     std::pair<std::map<TNode, float>, std::map<TNode, TNode> > dijkstra(const TNode &sourceVertex) const;
     std::set<std::set<TNode> > SCC() const;
+    std::set<std::set<TNode> > SCC2() const;
     TGraph<std::set<TNode> > condensation() const;
     
     template <typename T>
     friend std::ostream &operator <<(std::ostream &os, const TGraph<T> &g);
 };
-
 #pragma mark - Graph
 
 #include <cfloat>
@@ -336,6 +336,7 @@ typename TGraph<TNode>::TConstEdgeIterator TGraph<TNode>::GetVertexNeighboursBeg
         return TConstEdgeIterator(v, it->second.begin());
     }
     abort();
+//    throw std::runtime_error("bad vertex");
 }
 
 template<typename TNode>
@@ -347,6 +348,7 @@ typename TGraph<TNode>::TConstEdgeIterator TGraph<TNode>::GetVertexNeighboursEnd
         return TConstEdgeIterator(v, it->second.end());
     }
     abort();
+//    throw std::runtime_error("bad vertex");
 }
 
 #pragma mark - BFS
@@ -364,7 +366,7 @@ std::map<TNode, TNode> TGraph<TNode>::BFS(const TNode &v0) const
         queue.pop();
         for (typename TGraph<TNode>::TConstEdgeIterator eIt = GetVertexNeighboursBegin(v), eEnd = GetVertexNeighboursEnd(v); eIt != eEnd; ++eIt)
         {
-            if (!backEdges.count(eIt->Destination))
+            if (backEdges.find(eIt->Destination) == backEdges.end())
             {
                 backEdges[eIt->Destination] = eIt->Source;
                 queue.push(eIt->Destination);
@@ -480,8 +482,6 @@ void TGraph<T>::strong(const T &vertex, std::map<T, std::pair<std::pair<size_t, 
         T prev;
         do
         {
-            if (stack.size() == 0)
-                break;
             prev = stack.top();
             stack.pop();
             indexes[prev].second = false;
@@ -513,15 +513,13 @@ TGraph<std::set<T> > TGraph<T>::condensation() const
 {
     std::set<std::set<T> > scc = SCC();
     
-    std::map<T, size_t> vertexComponentMap;
-    size_t index = 0;
+    std::map<T, std::set<T> > vertexComponentMap;
     for (typename std::set<std::set<T> >::iterator component = scc.begin(); component != scc.end(); ++component)
     {
         for (typename std::set<T>::const_iterator vertex = component->begin(); vertex != component->end(); ++vertex)
         {
-            vertexComponentMap[*vertex] = index;
+            vertexComponentMap[*vertex] = *component;
         }
-        index++;
     }
     
     TGraph<std::set<T> > condensed;
@@ -534,10 +532,8 @@ TGraph<std::set<T> > TGraph<T>::condensation() const
             {
                 if (component->find(edgeIt->Destination) == component->end())
                 {
-                    typename std::set<std::set<T> >::iterator requiredSCC = scc.begin();
-                    std::advance(requiredSCC, vertexComponentMap[edgeIt->Destination]);
-                    condensed.AddVertex(*requiredSCC);
-                    condensed.AddEdge(*component, *requiredSCC, edgeIt->weight);
+                    condensed.AddVertex(vertexComponentMap[edgeIt->Destination]);
+                    condensed.AddEdge(*component, vertexComponentMap[edgeIt->Destination], edgeIt->weight);
                 }
             }
         }
@@ -546,9 +542,54 @@ TGraph<std::set<T> > TGraph<T>::condensation() const
 }
 
 #pragma mark - operator <<
+
+template <typename TNode>
+std::ostream &operator <<(std::ostream &os, const TGraph<TNode> &g)
+{
+    for (typename TGraph<TNode>::TAdjacencies::const_iterator pair = g.Adjacencies.begin(); pair != g.Adjacencies.end(); ++pair)
+    {
+        os << pair->first << ":" << std::endl;
+        for (typename TGraph<TNode>::TAdjValue::const_iterator neighbour = pair->second.begin(); neighbour != pair->second.end(); ++neighbour)
+        {
+            os << neighbour->first << "(" << neighbour->second << ")" << ", ";
+        }
+        os << std::endl;
+    }
+    return os;
+}
+#include <iostream>
+#include <istream>
 #include <set>
 #include <map>
 #include <vector>
+
+template <typename T, typename K>
+std::ostream &operator <<(std::ostream &os, const std::pair<T, K> &pair)
+{
+    os << "(" << pair.first << ", " << pair.second << ")";
+    return os;
+}
+
+template <typename T>
+std::ostream &operator <<(std::ostream &os, const std::set<T> &set)
+{
+    for (typename std::set<T>::const_iterator it = set.begin(); it != set.end(); ++it)
+    {
+        os << *it << ", ";
+    }
+    return os;
+}
+
+template <typename T, typename K>
+std::ostream &operator <<(std::ostream &os, const std::map<T, K> &map)
+{
+    for (typename std::map<T, K>::const_iterator it = map.begin(); it != map.end(); ++it)
+    {
+        os << it->first << " " << it->second << "; ";
+    }
+    return os;
+}
+
 
 template <typename T>
 std::istream &operator >>(std::istream &in, TGraph<T> &g)
@@ -597,6 +638,7 @@ void work(TGraph<T> &g)
         schedule.erase(--schedule.end());
         
         std::map<condensed_type, condensed_type> bfs_result = condensation.BFS(vertex);
+        
         for (typename std::map<condensed_type, condensed_type>::const_iterator reachable_vertex = bfs_result.begin(); reachable_vertex != bfs_result.end(); ++reachable_vertex)
         {
             condensed_type vertex = reachable_vertex->first;
