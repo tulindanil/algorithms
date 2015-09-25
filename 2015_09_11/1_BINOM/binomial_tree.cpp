@@ -34,6 +34,7 @@ class binomial_tree
 
 public:
 
+    binomial_tree();
     binomial_tree(const vertex<T> &v);
     binomial_tree(const binomial_tree<T> &tree);
     
@@ -65,6 +66,12 @@ private:
     size_t qty;
 
 };
+
+template <typename T>
+binomial_tree<T>::binomial_tree(): qty(1), root(new vertex<T>(T()))
+{
+    
+}
 
 template <typename T>
 binomial_tree<T>::binomial_tree(const binomial_tree<T> &tree): qty(tree.qty), root(tree.root)

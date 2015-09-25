@@ -21,11 +21,11 @@ void fill(binomial_queue<int> &b_queue, std::priority_queue<int> &queue, int cou
     }
 }
 
-void top(binomial_queue<int> b_queue, std::priority_queue<int> queue, int count)
+void top(binomial_queue<int> &b_queue, std::priority_queue<int> &queue, size_t count)
 {
     while (count)
     {
-        if (b_queue.top() != queue.top())
+        if (b_queue.top() != queue.top() || b_queue.size() != queue.size())
             throw std::runtime_error("top test failed");
         b_queue.pop();
         queue.pop();
@@ -36,23 +36,27 @@ void top(binomial_queue<int> b_queue, std::priority_queue<int> queue, int count)
 
 void doTest()
 {
-    for (int i = 7; i <= 2000; i++)
+    for (int i = 10; i <= 2000; i++)
     {
         binomial_queue<int> b_queue;
         std::priority_queue<int> queue;
         
-//        try
+        try
         {
             fill(b_queue, queue, i);
-            top(b_queue, queue, i);
+            top(b_queue, queue, i/2);
             
-            fill(b_queue, queue, 3);
+            fill(b_queue, queue, i/3);
+            top(b_queue, queue, i/5);
+            
+            fill(b_queue, queue, i);
+            top(b_queue, queue, b_queue.size());
             
             std::cout << "passed :" << i << std::endl;
         }
-//        catch (std::exception &e)
+        catch (std::exception &e)
         {
-//            std::cout << e.what() << std::endl;
+            std::cout << e.what() << std::endl;
         }
     }
     

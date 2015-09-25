@@ -29,6 +29,7 @@ public:
     typedef typename binomial_tree<value_type>::tree_reference tree_reference;
     
     binomial_queue();
+    binomial_queue(const binomial_queue<T> &queue);
     
     inline const_reference top() const;
     
@@ -65,6 +66,16 @@ template <typename T>
 binomial_queue<T>::binomial_queue(): top_tree(new binomial_tree<T>(T())), qty(0)
 {
     
+}
+
+template <typename T>
+binomial_queue<T>::binomial_queue(const binomial_queue<T> &queue): qty(queue.qty), top_tree(new binomial_tree<T>(*queue.top_tree))
+{
+    for (auto tree: trees)
+        trees.erase(tree);
+    
+    for (auto tree: queue.trees)
+        trees.insert(tree_reference(new binomial_tree<T>(*tree)));
 }
 
 #pragma mark - Push
@@ -123,7 +134,6 @@ void binomial_queue<T>::push(const T& value)
     tree_reference treeToAdd(new binomial_tree<T>(value));
     addTree(treeToAdd);
     updateTop();
-    
     check();
 }
 
@@ -141,7 +151,6 @@ void binomial_queue<T>::pop()
         addTree(child);
     
     updateTop();
-    
     check();
 }
 
@@ -191,13 +200,13 @@ template <typename  T>
 void binomial_queue<T>::check() const
 {
     int size = 0;
-    std::map<int, binomial_tree<T>> size_map;
+    std::map<size_t, binomial_tree<T>> size_map;
     for (auto tree: trees)
     {
         size_map[tree->size()] = tree;
         size += tree->size();
     }
     
-    if (size != qty && size_map.size() != trees.size())
+    if (size != qty || size_map.size() != trees.size())
         throw std::runtime_error("bad size");
 }
