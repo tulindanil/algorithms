@@ -56,9 +56,6 @@ bool TGraph<TNode>::AddVertex(const TNode &node)
 template <typename T>
 bool TGraph<T>::DeleteVertex(const T &vertex)
 {
-    if (Adjacencies.find(vertex) == Adjacencies.end())
-        return false;
-    
     for (typename TAdjacencies::iterator it = Adjacencies.begin(); it != Adjacencies.end(); ++it)
     {
         it->second.erase(vertex);
@@ -259,7 +256,7 @@ std::map<TNode, TNode> TGraph<TNode>::BFS(const TNode &v0) const
         queue.pop();
         for (typename TGraph<TNode>::TConstEdgeIterator eIt = GetVertexNeighboursBegin(v), eEnd = GetVertexNeighboursEnd(v); eIt != eEnd; ++eIt)
         {
-            if (!backEdges.count(eIt->Destination))
+            if (backEdges.find(eIt->Destination) == backEdges.end())
             {
                 backEdges[eIt->Destination] = eIt->Source;
                 queue.push(eIt->Destination);
@@ -375,8 +372,6 @@ void TGraph<T>::strong(const T &vertex, std::map<T, std::pair<std::pair<size_t, 
         T prev;
         do
         {
-            if (stack.size() == 0)
-                break;
             prev = stack.top();
             stack.pop();
             indexes[prev].second = false;
@@ -408,15 +403,13 @@ TGraph<std::set<T> > TGraph<T>::condensation() const
 {
     std::set<std::set<T> > scc = SCC();
     
-    std::map<T, size_t> vertexComponentMap;
-    size_t index = 0;
+    std::map<T, std::set<T> > vertexComponentMap;
     for (typename std::set<std::set<T> >::iterator component = scc.begin(); component != scc.end(); ++component)
     {
         for (typename std::set<T>::const_iterator vertex = component->begin(); vertex != component->end(); ++vertex)
         {
-            vertexComponentMap[*vertex] = index;
+            vertexComponentMap[*vertex] = *component;
         }
-        index++;
     }
     
     TGraph<std::set<T> > condensed;
@@ -429,10 +422,8 @@ TGraph<std::set<T> > TGraph<T>::condensation() const
             {
                 if (component->find(edgeIt->Destination) == component->end())
                 {
-                    typename std::set<std::set<T> >::iterator requiredSCC = scc.begin();
-                    std::advance(requiredSCC, vertexComponentMap[edgeIt->Destination]);
-                    condensed.AddVertex(*requiredSCC);
-                    condensed.AddEdge(*component, *requiredSCC, edgeIt->weight);
+                    condensed.AddVertex(vertexComponentMap[edgeIt->Destination]);
+                    condensed.AddEdge(*component, vertexComponentMap[edgeIt->Destination], edgeIt->weight);
                 }
             }
         }

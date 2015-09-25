@@ -65,34 +65,28 @@ void work(TGraph<T> &g)
     typedef typename TGraph<T>::condensed_type condensed_type;
     TGraph<condensed_type> condensation = g.condensation();
     
-    std::map<condensed_type, std::pair<size_t, size_t> > dfs_result = condensation.DFS();
-    std::set<std::pair<size_t, condensed_type> > schedule;
-    
-    std::cout << dfs_result << std::endl;
-    
-    for (typename std::map<condensed_type, std::pair<size_t, size_t> >::const_iterator it = dfs_result.begin(); it != dfs_result.end(); ++it)
+    std::set<condensed_type> sources;
+    for (typename TGraph<condensed_type>::TConstVertexIterator vertex_it = condensation.GetVerticesBegin(); vertex_it != condensation.GetVerticesEnd(); ++vertex_it)
     {
-        schedule.insert(std::make_pair(it->second.second, it->first));
+        sources.insert(*vertex_it);
     }
     
-    size_t qty = 0;
-    while (condensation.size())
+    for (typename TGraph<condensed_type>::TConstVertexIterator vertex_it = condensation.GetVerticesBegin(); vertex_it != condensation.GetVerticesEnd(); ++vertex_it)
     {
-        condensed_type vertex = (--schedule.end())->second;
-        schedule.erase(--schedule.end());
-        
-        std::map<condensed_type, condensed_type> bfs_result = condensation.BFS(vertex);
-        
-        for (typename std::map<condensed_type, condensed_type>::const_iterator reachable_vertex = bfs_result.begin(); reachable_vertex != bfs_result.end(); ++reachable_vertex)
+        for (typename TGraph<condensed_type>::TConstVertexIterator v = condensation.GetVerticesBegin(); v != condensation.GetVerticesEnd(); ++v)
         {
-            condensed_type vertex = reachable_vertex->first;
-            condensation.DeleteVertex(vertex);
-            schedule.erase(std::make_pair(dfs_result[vertex].second, vertex));
+            for (typename TGraph<condensed_type>::TConstEdgeIterator edge = condensation.GetVertexNeighboursBegin(*v); edge != condensation.GetVertexNeighboursEnd(*v); ++edge)
+            {
+                if (edge->Destination == *vertex_it)
+                {
+                    if (sources.find(*vertex_it) != sources.end())
+                        sources.erase(sources.find(*vertex_it));
+                    break;
+                }
+            }
         }
-        
-        qty++;
     }
-    std::cout << qty << std::endl;
+    std::cout << sources.size();
 }
 
 int main()

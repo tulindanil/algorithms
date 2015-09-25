@@ -101,6 +101,7 @@ public:
     
     std::pair<std::map<TNode, float>, std::map<TNode, TNode> > dijkstra(const TNode &sourceVertex) const;
     std::set<std::set<TNode> > SCC() const;
+    std::set<std::set<TNode> > SCC2() const;
     TGraph<std::set<TNode> > condensation() const;
     
     template <typename T>

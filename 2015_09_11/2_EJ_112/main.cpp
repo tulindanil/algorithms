@@ -448,7 +448,6 @@ void readGraph(std::istream &is, TGraph<T> &g, T &entry, std::vector<T> &exits)
         g.AddVertex(exit);
         
         g.AddEdge(entry, exit, 0);
-//        g.AddEdge(exit, entry, 1);
         
         hyperToonels.push_back(std::make_pair(entry, exit));
     }
@@ -476,9 +475,6 @@ int main(int argc, const char * argv[])
 {
     typedef std::pair<int, int> T;
     TGraph<T> g;
-    
-//    std::string filename = "input.txt";
-//    std::ifstream ifstream(filename);
     
     T entry;
     std::vector<T> exits;
