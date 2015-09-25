@@ -1,5 +1,115 @@
-#include "Graph.h"
+#pragma once
 
+#include <iostream>
+#include <set>
+#include <map>
+#include <stack>
+#include <vector>
+
+template<typename TNode>
+class TGraph
+{
+    
+private:
+    
+    typedef std::map<TNode, float> TAdjValue;
+    typedef std::map<TNode, TAdjValue> TAdjacencies;
+    TAdjacencies Adjacencies;
+    
+    void strong(const TNode &vertex, std::map<TNode, std::pair<std::pair<size_t, size_t>, bool> > &indexes, std::stack<TNode> &stack, std::set<std::set<TNode> > &stronglyConnected) const;
+    void DFSVisit(const TNode &vertex, size_t &time, std::map<TNode, std::pair<size_t, size_t> > &schedule) const;
+    
+public:
+    
+    typedef std::set<TNode> condensed_type;
+    
+    inline size_t size() const;
+    
+    TGraph();
+    TGraph(const TGraph &);
+    //explicit TGraph(const std::vector<std::pair<TNode, TNode> >& edges);
+    
+    class TConstVertexIterator
+    {
+        
+    private:
+        
+        typename TAdjacencies::const_iterator InternalIt;
+        
+    public:
+        
+        TConstVertexIterator(const TConstVertexIterator&);
+        TConstVertexIterator &operator = (const TConstVertexIterator&);
+        TConstVertexIterator(typename TAdjacencies::const_iterator it);
+        
+        const TNode& operator*() const;
+        const TNode* operator->() const;
+        bool operator == (const TConstVertexIterator&) const;
+        bool operator != (const TConstVertexIterator&) const;
+        TConstVertexIterator& operator++();
+        
+    };
+    
+    TConstVertexIterator GetVerticesBegin() const;
+    TConstVertexIterator GetVerticesEnd() const;
+    
+    bool HasVertex(const TNode&) const;
+    
+    struct TEdge
+    {
+        TNode Source;
+        TNode Destination;
+        float weight;
+    };
+    
+    class TConstEdgeIterator
+    {
+        
+    private:
+        
+        bool isInit;
+        typename TAdjValue::const_iterator InternalIt;
+        TEdge InternalEdge;
+        
+        void Initialize();
+        
+    public:
+        
+        TConstEdgeIterator(const TNode& source, typename TAdjValue::const_iterator it);
+        TConstEdgeIterator(const TConstEdgeIterator&);
+        TConstEdgeIterator& operator=(const TConstEdgeIterator&);
+        
+        const TEdge &operator* ();
+        const TEdge *operator-> ();
+        bool operator == (const TConstEdgeIterator&) const;
+        bool operator != (const TConstEdgeIterator&) const;
+        TConstEdgeIterator &operator++ ();
+        
+    };
+    
+    TConstEdgeIterator GetVertexNeighboursBegin(const TNode&) const;
+    TConstEdgeIterator GetVertexNeighboursEnd(const TNode&) const;
+    
+    bool AddVertex(const TNode&);
+    bool AddEdge(const TNode&, const TNode&, const float weight);
+    
+    bool DeleteVertex(const TNode &);
+    
+    TGraph<TNode> transposedGraph() const;
+    
+    std::map<TNode, TNode> BFS(const TNode &v0) const;
+    std::map<TNode, std::pair<size_t, size_t> > DFS() const;
+    
+    std::pair<std::map<TNode, float>, std::map<TNode, TNode> > dijkstra(const TNode &sourceVertex) const;
+    std::pair<std::vector<TNode>, float> shortestPath(const TNode &source, const TNode &destination) const;
+    
+    std::set<std::set<TNode> > SCC() const;
+    std::set<std::set<TNode> > SCC2() const;
+    TGraph<std::set<TNode> > condensation() const;
+    
+    template <typename T>
+    friend std::ostream &operator <<(std::ostream &os, const TGraph<T> &g);
+};
 #pragma mark - Graph
 
 #include <cfloat>
@@ -453,4 +563,84 @@ std::ostream &operator <<(std::ostream &os, const TGraph<TNode> &g)
         os << std::endl;
     }
     return os;
+}
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cmath>
+#include <set>
+
+
+#define find(x) find_(cities, *x)
+#define _find(x) find_(cities, x)
+
+template <typename T>
+std::istream &operator >>(std::istream &in, std::pair<T, T> &p)
+{
+    in >> p.first;
+    in >> p.second;
+    return in;
+}
+
+int main()
+{
+    
+    size_t qty = 0;
+    std::cin >> qty;
+    
+    float distance = 0;
+    std::cin >> distance;
+    
+    std::pair<float, float> A, B;
+    std::cin >> A >> B;
+    
+    std::vector<std::pair<float, float> > cities, abroad;
+    
+    for (size_t i = 2; i < qty; i++)
+    {
+        std::pair<float, float> p;
+        std::cin >> p;
+        
+        if (p.first < 0)
+            abroad.push_back(p);
+        
+        cities.push_back(p);
+    }
+    
+    cities.push_back(A);
+    cities.push_back(B);
+    
+    TGraph<std::pair<float, float> > g;
+    
+    for (std::vector<std::pair<float, float> >::const_iterator p1 = cities.begin(); p1 != cities.end(); ++p1)
+    {
+        g.AddVertex(*p1);
+        for (std::vector<std::pair<float, float> >::const_iterator p2 = cities.begin(); p2 != cities.end(); ++p2)
+        {
+            if (*p1 == *p2)
+                continue;
+            
+            g.AddVertex(*p2);
+            
+            float dist = sqrt(pow(p1->first - p2->first, 2) + pow(p1->second - p2->second, 2));
+            if (dist < (distance))
+            {
+                g.AddEdge(*p1, *p2, (dist));
+                g.AddEdge(*p2, *p1, (dist));
+            }
+        }
+    }
+    
+    float min = FLT_MAX;
+    for (std::vector<std::pair<float, float> >::const_iterator c = abroad.begin(); c != abroad.end(); ++c)
+    {
+        float fst = g.shortestPath(A, *c).second, snd = g.shortestPath(*c, B).second;
+        if (min > fst + snd)
+        {
+            min = fst + snd;
+        }
+    }
+    std::cout << min << std::endl;
+    
+    return 0;
 }

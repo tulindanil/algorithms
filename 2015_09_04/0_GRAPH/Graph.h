@@ -4,6 +4,7 @@
 #include <set>
 #include <map>
 #include <stack>
+#include <vector>
 
 template<typename TNode>
 class TGraph
@@ -100,6 +101,8 @@ public:
     std::map<TNode, std::pair<size_t, size_t> > DFS() const;
     
     std::pair<std::map<TNode, float>, std::map<TNode, TNode> > dijkstra(const TNode &sourceVertex) const;
+    std::pair<std::vector<TNode>, float> shortestPath(const TNode &source, const TNode &destination) const;
+    
     std::set<std::set<TNode> > SCC() const;
     std::set<std::set<TNode> > SCC2() const;
     TGraph<std::set<TNode> > condensation() const;
