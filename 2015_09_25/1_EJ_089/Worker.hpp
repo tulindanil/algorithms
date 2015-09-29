@@ -20,8 +20,6 @@ struct OrderedState
     int depth;
 };
 
-// This compares distances as
-// distance from start + heuristic distance to end
 static bool operator <(const OrderedState &lhs, const OrderedState &rhs)
 {
     size_t lDistance = lhs.distFromStart + lhs.distToEnd;

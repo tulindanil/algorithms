@@ -1,7 +1,8 @@
 #include "Worker.hpp"
 #include <cassert>
 
-Move movements[] = {
+Move movements[] =
+{
     {0, 1,  right},
     {1, 0,  down},
     {0, -1, left},
@@ -30,8 +31,6 @@ inline void Worker::relaxState(const Grid& grid, size_t newDist, Move newMove, i
         
         moveMap[grid] = newMove;
         distance[grid] = newDist;
-        
-        // insert new data
         
         OrderedState st;
         
@@ -92,15 +91,15 @@ size_t Worker::solve(const Grid &source)
         bool hasReachedGoal = (heuristic(v.grid) == 0);
         bool hasReachedDepthLimit = (v.depth >= 1000);
         
-        if (hasReachedGoal) {
+        if (hasReachedGoal)
+        {
             target = v.grid;
             std::cout << "Yes" << std::endl;
             break;
         }
         
-        if (hasReachedDepthLimit) {
+        if (hasReachedDepthLimit)
             continue;
-        }
         
         traverseNeighbours(v);
     }

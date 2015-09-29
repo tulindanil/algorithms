@@ -48,8 +48,6 @@ int main(int argc, const char * argv[])
         return 0;
     }
     
-//    std::cout << "Yes" << std::endl;
-    
     Worker worker(manhattanHeuristic);
     std::cout << worker.solve(grid);
     

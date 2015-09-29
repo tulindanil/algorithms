@@ -127,7 +127,8 @@ public:
 #endif
 #include <cassert>
 
-Move movements[] = {
+Move movements[] =
+{
     {0, 1,  right},
     {1, 0,  down},
     {0, -1, left},
@@ -143,7 +144,6 @@ inline void Worker::relaxState(const Grid& grid, size_t newDist, Move newMove, i
     {
         if (!notVisited)
         {
-            // delete old data
             OrderedState st;
             st.distFromStart = distance[grid];
             st.distToEnd = heuristic(grid);
@@ -151,13 +151,12 @@ inline void Worker::relaxState(const Grid& grid, size_t newDist, Move newMove, i
             st.depth = -1;
             
             std::set<OrderedState>::const_iterator it = stQueue.lower_bound(st);
+            assert(it != stQueue.end());
             stQueue.erase(it);
         }
         
         moveMap[grid] = newMove;
         distance[grid] = newDist;
-        
-        // insert new data
         
         OrderedState st;
         
@@ -218,15 +217,15 @@ size_t Worker::solve(const Grid &source)
         bool hasReachedGoal = (heuristic(v.grid) == 0);
         bool hasReachedDepthLimit = (v.depth >= 1000);
         
-        if (hasReachedGoal) {
+        if (hasReachedGoal)
+        {
             target = v.grid;
             std::cout << "Yes" << std::endl;
             break;
         }
         
-        if (hasReachedDepthLimit) {
+        if (hasReachedDepthLimit)
             continue;
-        }
         
         traverseNeighbours(v);
     }
@@ -239,23 +238,18 @@ bool Worker::isSolvable(const Grid &grid)
     size_t inversions = 0;
     size_t cellsQty = grid.size() * grid.size();
     
-    bool blankOnEvenPosition = true;
-    
     for (size_t posOne = 0; posOne < cellsQty; ++posOne)
     {
         size_t firstValue = grid[posOne];
         
-        if (firstValue == 0) {
-            blankOnEvenPosition = (posOne + 1) % 2;
+        if (firstValue == 0)
             continue;
-        }
         
         for (size_t posTwo = posOne + 1; posTwo < cellsQty; ++posTwo)
         {
             size_t secondValue = grid[posTwo];
-            if (secondValue > 0) {
+            if (secondValue > 0)
                 inversions += (firstValue < secondValue);
-            }
         }
     }
     
@@ -338,6 +332,7 @@ bool Grid::move(int dx, int dy)
         std::swap(at(newEmptyCellPos.first, newEmptyCellPos.second), at(emptyCellPos.first, emptyCellPos.second));
         
         findEmptyCell();
+        assert(emptyCellPosition == newEmptyCellPos.first * _size + newEmptyCellPos.second);
         return true;
     }
     return false;
@@ -408,7 +403,6 @@ int main(int argc, const char * argv[])
         std::cout << "No" << std::endl;
         return 0;
     }
-    
     
     Worker worker(manhattanHeuristic);
     std::cout << worker.solve(grid);
