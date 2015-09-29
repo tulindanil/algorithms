@@ -21,7 +21,7 @@ void fill(binomial_queue<int> &b_queue, std::priority_queue<int> &queue, int cou
     }
 }
 
-void top(binomial_queue<int> &b_queue, std::priority_queue<int> &queue, size_t count)
+void pop(binomial_queue<int> &b_queue, std::priority_queue<int> &queue, size_t count)
 {
     while (count)
     {
@@ -36,7 +36,7 @@ void top(binomial_queue<int> &b_queue, std::priority_queue<int> &queue, size_t c
 
 void doTest()
 {
-    for (int i = 10; i <= 2000; i++)
+    for (int i = 1000; i <= 10000; i += 1000)
     {
         binomial_queue<int> b_queue;
         std::priority_queue<int> queue;
@@ -44,13 +44,13 @@ void doTest()
         try
         {
             fill(b_queue, queue, i);
-            top(b_queue, queue, i/2);
+            pop(b_queue, queue, i/2);
             
             fill(b_queue, queue, i/3);
-            top(b_queue, queue, i/5);
+            pop(b_queue, queue, i/5);
             
             fill(b_queue, queue, i);
-            top(b_queue, queue, b_queue.size());
+            pop(b_queue, queue, b_queue.size());
             
             std::cout << "passed :" << i << std::endl;
         }
