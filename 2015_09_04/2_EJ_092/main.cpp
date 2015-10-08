@@ -38,9 +38,15 @@ std::istream &operator >>(std::istream &in, TGraph<T> &g)
 {
     size_t vertices, edges;
     
-    if (!(in >> vertices)){}
+    if (!(in >> vertices))
+    {
+        abort();
+    }
     
-    if (!(in >> edges)){}
+    if (!(in >> edges))
+    {
+        abort();
+    }
     
     for (size_t i = 0; i < edges; i++)
     {
@@ -65,18 +71,25 @@ void work(TGraph<T> &g)
     typedef typename TGraph<T>::condensed_type condensed_type;
     TGraph<condensed_type> condensation = g.condensation();
     
-    std::set<condensed_type> sources;
+    std::set<condensed_type> sources, isolated;
     for (typename TGraph<condensed_type>::TConstVertexIterator vertex_it = condensation.GetVerticesBegin(); vertex_it != condensation.GetVerticesEnd(); ++vertex_it)
     {
         sources.insert(*vertex_it);
+        isolated.insert(*vertex_it);
     }
     
     for (typename TGraph<condensed_type>::TConstVertexIterator vertex_it = condensation.GetVerticesBegin(); vertex_it != condensation.GetVerticesEnd(); ++vertex_it)
     {
+        if (condensation.GetVertexNeighboursBegin(*vertex_it) == condensation.GetVertexNeighboursEnd(*vertex_it))
+            sources.erase(sources.find(*vertex_it));
+        
         for (typename TGraph<condensed_type>::TConstVertexIterator v = condensation.GetVerticesBegin(); v != condensation.GetVerticesEnd(); ++v)
         {
             for (typename TGraph<condensed_type>::TConstEdgeIterator edge = condensation.GetVertexNeighboursBegin(*v); edge != condensation.GetVertexNeighboursEnd(*v); ++edge)
             {
+                isolated.erase(*vertex_it);
+                isolated.erase(edge->Destination);
+                
                 if (edge->Destination == *vertex_it)
                 {
                     if (sources.find(*vertex_it) != sources.end())
@@ -86,16 +99,14 @@ void work(TGraph<T> &g)
             }
         }
     }
-    std::cout << sources.size();
+    std::cout << sources.size() + isolated.size();
 }
 
 int main()
 {
     
     TGraph<int> g;
-    
     std::cin >> g;
-    
     work(g);
     
     return 0;

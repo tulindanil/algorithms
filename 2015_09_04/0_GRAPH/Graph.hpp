@@ -4,7 +4,7 @@
 
 #include <cfloat>
 #include <stack>
-#include <cmath>
+#include <math.h>
 #include <queue>
 
 #define min(x, y) (((x) > (y)) ? (y) : (x))
@@ -305,12 +305,73 @@ std::map<TNode, std::pair<size_t, size_t> > TGraph<TNode>::DFS() const
 
 #pragma mark - Algotithms
 
+#pragma mark - Shortest Path
+
+size_t f(size_t fst, size_t snd);
 template <typename T>
 std::pair<std::vector<T>, float> TGraph<T>::shortestPath(const T &source, const T &destination) const
 {
-    std::map<T, float> paths = dijkstra(source).first;
-    return std::make_pair(std::vector<T>(), paths[destination]);
+    std::map<T, float> g_score;
+    std::map<T, float> f_score;
+    
+    std::set<T> closed_set, open_set;
+    open_set.insert(source);
+    
+    g_score[source] = 0;
+    f_score[source] = 0 + f(source, destination);
+    
+//    for (typename TGraph<T>::TConstVertexIterator vertex = this->GetVerticesBegin(); vertex != this->GetVerticesEnd(); ++vertex)
+//    {
+//        if (source != *vertex)
+//        {
+//            g_score[*vertex] = FLT_MAX;
+//            f_score[*vertex] = FLT_MAX;
+//        }
+//    }
+    
+    std::set<std::pair<float, T> > queue;
+    queue.insert(std::make_pair(f_score[source], source));
+    
+    while (open_set.empty() == false)
+    {
+        T current = queue.begin()->second;
+        
+        if (current == destination)
+            return std::make_pair(std::vector<T>(), g_score[destination]);
+        
+        open_set.erase(current);
+        queue.erase(queue.begin());
+        closed_set.insert(current);
+        
+        for (typename TGraph<T>::TConstEdgeIterator edge = this->GetVertexNeighboursBegin(current); edge != this->GetVertexNeighboursEnd(current); ++edge)
+        {
+            if (closed_set.find(edge->Destination) != closed_set.end())
+                continue;
+            
+            float alternativeWeight = g_score[current] + edge->weight;
+            if (alternativeWeight < g_score[edge->Destination] || open_set.find(edge->Destination) == open_set.end())
+            {
+                g_score[edge->Destination] = alternativeWeight;
+                
+                if (open_set.find(edge->Destination) == open_set.end())
+                {
+                    queue.insert(std::make_pair(f_score[edge->Destination], edge->Destination));
+                    open_set.insert(edge->Destination);
+                }
+                else
+                {
+                    queue.erase(queue.find(std::make_pair(f_score[edge->Destination], edge->Destination)));
+                    queue.insert(std::make_pair(alternativeWeight + f(edge->Destination, destination), edge->Destination));
+                }
+                
+                f_score[edge->Destination] = alternativeWeight + f(edge->Destination, destination);
+            }
+        }
+    }
+    return std::make_pair(std::vector<T>(), g_score[destination]);
 }
+
+#pragma mark - Dijkstra
 
 template <typename T>
 std::pair<std::map<T, float>, std::map<T, T> > TGraph<T>::dijkstra(const T &sourceVertex) const
@@ -353,6 +414,8 @@ std::pair<std::map<T, float>, std::map<T, T> > TGraph<T>::dijkstra(const T &sour
     }
     return std::make_pair(destinations, paths);
 }
+
+#pragma mark - SCC
 
 template <typename T>
 void TGraph<T>::strong(const T &vertex, std::map<T, std::pair<std::pair<size_t, size_t>, bool> > &indexes, std::stack<T> &stack, std::set<std::set<T> > &stronglyConnected) const

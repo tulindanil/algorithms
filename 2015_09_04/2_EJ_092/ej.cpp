@@ -1,9 +1,42 @@
-#pragma once
+#include <iostream>
+#include <istream>
+#include <set>
+#include <map>
+#include <vector>
+
+template <typename T, typename K>
+std::ostream &operator <<(std::ostream &os, const std::pair<T, K> &pair)
+{
+    os << "(" << pair.first << ", " << pair.second << ")";
+    return os;
+}
+
+template <typename T>
+std::ostream &operator <<(std::ostream &os, const std::set<T> &set)
+{
+    for (typename std::set<T>::const_iterator it = set.begin(); it != set.end(); ++it)
+    {
+        os << *it << ", ";
+    }
+    return os;
+}
+
+template <typename T, typename K>
+std::ostream &operator <<(std::ostream &os, const std::map<T, K> &map)
+{
+    for (typename std::map<T, K>::const_iterator it = map.begin(); it != map.end(); ++it)
+    {
+        os << it->first << " " << it->second << "; ";
+    }
+    return os;
+}
+
 
 #include <iostream>
 #include <set>
 #include <map>
 #include <stack>
+#include <vector>
 
 template<typename TNode>
 class TGraph
@@ -15,7 +48,11 @@ private:
     typedef std::map<TNode, TAdjValue> TAdjacencies;
     TAdjacencies Adjacencies;
     
-    void strong(const TNode &vertex, std::map<TNode, std::pair<std::pair<size_t, size_t>, bool> > &indexes, std::stack<TNode> &stack, std::set<std::set<TNode> > &stronglyConnected) const;
+    void strong(const TNode &vertex,
+                std::map<TNode, std::pair<std::pair<size_t, size_t>, bool> > &indexes,
+                std::stack<TNode> &stack,
+                std::set<std::set<TNode> > &stronglyConnected) const;
+    
     void DFSVisit(const TNode &vertex, size_t &time, std::map<TNode, std::pair<size_t, size_t> > &schedule) const;
     
 public:
@@ -100,18 +137,20 @@ public:
     std::map<TNode, std::pair<size_t, size_t> > DFS() const;
     
     std::pair<std::map<TNode, float>, std::map<TNode, TNode> > dijkstra(const TNode &sourceVertex) const;
+    std::pair<std::vector<TNode>, float> shortestPath(const TNode &source, const TNode &destination) const;
+    
     std::set<std::set<TNode> > SCC() const;
     std::set<std::set<TNode> > SCC2() const;
     TGraph<std::set<TNode> > condensation() const;
     
     template <typename T>
     friend std::ostream &operator <<(std::ostream &os, const TGraph<T> &g);
+
 };
-#pragma mark - Graph
 
 #include <cfloat>
 #include <stack>
-#include <cmath>
+#include <math.h>
 #include <queue>
 
 #define min(x, y) (((x) > (y)) ? (y) : (x))
@@ -193,7 +232,6 @@ TGraph<TNode> TGraph<TNode>::transposedGraph() const
     return transposedGraph;
 }
 
-#pragma mark - VertexIterator
 
 template <typename TNode>
 TGraph<TNode>::TConstVertexIterator::TConstVertexIterator(typename TGraph<TNode>::TAdjacencies::const_iterator it): InternalIt(it)
@@ -257,7 +295,6 @@ typename TGraph<TNode>::TConstVertexIterator TGraph<TNode>::GetVerticesEnd() con
     return TConstVertexIterator(Adjacencies.end());
 }
 
-#pragma mark - EdgeIterator
 
 template<typename TNode>
 void TGraph<TNode>::TConstEdgeIterator::Initialize()
@@ -333,7 +370,6 @@ typename TGraph<TNode>::TConstEdgeIterator TGraph<TNode>::GetVertexNeighboursBeg
         return TConstEdgeIterator(v, it->second.begin());
     }
     abort();
-//    throw std::runtime_error("bad vertex");
 }
 
 template<typename TNode>
@@ -345,10 +381,8 @@ typename TGraph<TNode>::TConstEdgeIterator TGraph<TNode>::GetVertexNeighboursEnd
         return TConstEdgeIterator(v, it->second.end());
     }
     abort();
-//    throw std::runtime_error("bad vertex");
 }
 
-#pragma mark - BFS
 
 template<typename TNode>
 std::map<TNode, TNode> TGraph<TNode>::BFS(const TNode &v0) const
@@ -373,7 +407,6 @@ std::map<TNode, TNode> TGraph<TNode>::BFS(const TNode &v0) const
     return backEdges;
 }
 
-#pragma mark - DFS
 
 template <typename TNode>
 void TGraph<TNode>::DFSVisit(const TNode &vertex, size_t &time, std::map<TNode, std::pair<size_t, size_t> > &schedule) const
@@ -410,7 +443,64 @@ std::map<TNode, std::pair<size_t, size_t> > TGraph<TNode>::DFS() const
     return output;
 }
 
-#pragma mark - Algotithms
+
+
+size_t f(size_t fst, size_t snd);
+template <typename T>
+std::pair<std::vector<T>, float> TGraph<T>::shortestPath(const T &source, const T &destination) const
+{
+    std::map<T, float> g_score;
+    std::map<T, float> f_score;
+    
+    std::set<T> closed_set, open_set;
+    open_set.insert(source);
+    
+    g_score[source] = 0;
+    f_score[source] = 0 + f(source, destination);
+    
+    
+    std::set<std::pair<float, T> > queue;
+    queue.insert(std::make_pair(f_score[source], source));
+    
+    while (open_set.empty() == false)
+    {
+        T current = queue.begin()->second;
+        
+        if (current == destination)
+            return std::make_pair(std::vector<T>(), g_score[destination]);
+        
+        open_set.erase(current);
+        queue.erase(queue.begin());
+        closed_set.insert(current);
+        
+        for (typename TGraph<T>::TConstEdgeIterator edge = this->GetVertexNeighboursBegin(current); edge != this->GetVertexNeighboursEnd(current); ++edge)
+        {
+            if (closed_set.find(edge->Destination) != closed_set.end())
+                continue;
+            
+            float alternativeWeight = g_score[current] + edge->weight;
+            if (alternativeWeight < g_score[edge->Destination] || open_set.find(edge->Destination) == open_set.end())
+            {
+                g_score[edge->Destination] = alternativeWeight;
+                
+                if (open_set.find(edge->Destination) == open_set.end())
+                {
+                    queue.insert(std::make_pair(f_score[edge->Destination], edge->Destination));
+                    open_set.insert(edge->Destination);
+                }
+                else
+                {
+                    queue.erase(queue.find(std::make_pair(f_score[edge->Destination], edge->Destination)));
+                    queue.insert(std::make_pair(alternativeWeight + f(edge->Destination, destination), edge->Destination));
+                }
+                
+                f_score[edge->Destination] = alternativeWeight + f(edge->Destination, destination);
+            }
+        }
+    }
+    return std::make_pair(std::vector<T>(), g_score[destination]);
+}
+
 
 template <typename T>
 std::pair<std::map<T, float>, std::map<T, T> > TGraph<T>::dijkstra(const T &sourceVertex) const
@@ -453,6 +543,7 @@ std::pair<std::map<T, float>, std::map<T, T> > TGraph<T>::dijkstra(const T &sour
     }
     return std::make_pair(destinations, paths);
 }
+
 
 template <typename T>
 void TGraph<T>::strong(const T &vertex, std::map<T, std::pair<std::pair<size_t, size_t>, bool> > &indexes, std::stack<T> &stack, std::set<std::set<T> > &stronglyConnected) const
@@ -538,7 +629,6 @@ TGraph<std::set<T> > TGraph<T>::condensation() const
     return condensed;
 }
 
-#pragma mark - operator <<
 
 template <typename TNode>
 std::ostream &operator <<(std::ostream &os, const TGraph<TNode> &g)
@@ -554,48 +644,21 @@ std::ostream &operator <<(std::ostream &os, const TGraph<TNode> &g)
     }
     return os;
 }
-#include <iostream>
-#include <istream>
-#include <set>
-#include <map>
-#include <vector>
-
-template <typename T, typename K>
-std::ostream &operator <<(std::ostream &os, const std::pair<T, K> &pair)
-{
-    os << "(" << pair.first << ", " << pair.second << ")";
-    return os;
-}
-
-template <typename T>
-std::ostream &operator <<(std::ostream &os, const std::set<T> &set)
-{
-    for (typename std::set<T>::const_iterator it = set.begin(); it != set.end(); ++it)
-    {
-        os << *it << ", ";
-    }
-    return os;
-}
-
-template <typename T, typename K>
-std::ostream &operator <<(std::ostream &os, const std::map<T, K> &map)
-{
-    for (typename std::map<T, K>::const_iterator it = map.begin(); it != map.end(); ++it)
-    {
-        os << it->first << " " << it->second << "; ";
-    }
-    return os;
-}
-
 
 template <typename T>
 std::istream &operator >>(std::istream &in, TGraph<T> &g)
 {
     size_t vertices, edges;
     
-    if (!(in >> vertices)){}
+    if (!(in >> vertices))
+    {
+        abort();
+    }
     
-    if (!(in >> edges)){}
+    if (!(in >> edges))
+    {
+        abort();
+    }
     
     for (size_t i = 0; i < edges; i++)
     {
@@ -620,37 +683,42 @@ void work(TGraph<T> &g)
     typedef typename TGraph<T>::condensed_type condensed_type;
     TGraph<condensed_type> condensation = g.condensation();
     
-//    std::set<condensed_type> sources;
-//    for (typename TGraph<condensed_type>::TConstVertexIterator vertex_it = condensation.GetVerticesBegin(); vertex_it != condensation.GetVerticesEnd(); ++vertex_it)
-//    {
-//        sources.insert(*vertex_it);
-//    }
-//    
-//    for (typename TGraph<condensed_type>::TConstVertexIterator vertex_it = condensation.GetVerticesBegin(); vertex_it != condensation.GetVerticesEnd(); ++vertex_it)
-//    {
-//        for (typename TGraph<condensed_type>::TConstVertexIterator v = condensation.GetVerticesBegin(); v != condensation.GetVerticesEnd(); ++v)
-//        {
-//            for (typename TGraph<condensed_type>::TConstEdgeIterator edge = condensation.GetVertexNeighboursBegin(*v); edge != condensation.GetVertexNeighboursEnd(*v); ++edge)
-//            {
-//                if (edge->Destination == *vertex_it)
-//                {
-//                    if (sources.find(*vertex_it) != sources.end())
-//                        sources.erase(sources.find(*vertex_it));
-//                    break;
-//                }
-//            }
-//        }
-//    }
-    std::cout << condensation.size();
+    std::set<condensed_type> sources, isolated;
+    for (typename TGraph<condensed_type>::TConstVertexIterator vertex_it = condensation.GetVerticesBegin(); vertex_it != condensation.GetVerticesEnd(); ++vertex_it)
+    {
+        sources.insert(*vertex_it);
+        isolated.insert(*vertex_it);
+    }
+    
+    for (typename TGraph<condensed_type>::TConstVertexIterator vertex_it = condensation.GetVerticesBegin(); vertex_it != condensation.GetVerticesEnd(); ++vertex_it)
+    {
+        if (condensation.GetVertexNeighboursBegin(*vertex_it) == condensation.GetVertexNeighboursEnd(*vertex_it))
+            sources.erase(sources.find(*vertex_it));
+        
+        for (typename TGraph<condensed_type>::TConstVertexIterator v = condensation.GetVerticesBegin(); v != condensation.GetVerticesEnd(); ++v)
+        {
+            for (typename TGraph<condensed_type>::TConstEdgeIterator edge = condensation.GetVertexNeighboursBegin(*v); edge != condensation.GetVertexNeighboursEnd(*v); ++edge)
+            {
+                isolated.erase(*vertex_it);
+                isolated.erase(edge->Destination);
+                
+                if (edge->Destination == *vertex_it)
+                {
+                    if (sources.find(*vertex_it) != sources.end())
+                        sources.erase(sources.find(*vertex_it));
+                    break;
+                }
+            }
+        }
+    }
+    std::cout << sources.size() + isolated.size();
 }
 
 int main()
 {
     
     TGraph<int> g;
-    
     std::cin >> g;
-    
     work(g);
     
     return 0;

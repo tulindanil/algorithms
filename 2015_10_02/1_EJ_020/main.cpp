@@ -120,13 +120,11 @@ TGraph<T> minSpanningTree(const TGraph<T> &g, const T &v0)
     {
         T v = queue.begin()->second;
         queue.erase(queue.begin());
-        
         spanningTree.AddVertex(v);
         
         if (pathMap.find(v) != pathMap.end())
         {
-            spanningTree.AddVertex(pathMap[v]);
-            spanningTree.AddEdge(v, pathMap[v], 1);
+            spanningTree.AddEdge(pathMap[v], v, 1);
         }
         
         for (typename TGraph<T>::TConstEdgeIterator edge = g.GetVertexNeighboursBegin(v); edge != g.GetVertexNeighboursEnd(v); ++edge)
@@ -148,22 +146,22 @@ TGraph<T> minSpanningTree(const TGraph<T> &g, const T &v0)
 }
 
 template<typename T>
-std::ostream &operator<<(std::ostream &out, const TGraph<T> &g)
+void out(std::ostream &out, const TGraph<T> &g)
 {
-    std::map<std::string, std::string> map;
+    std::multimap<std::string, std::string> map;
     for (typename TGraph<T>::TConstVertexIterator v1 = g.GetVerticesBegin(); v1 != g.GetVerticesEnd(); ++v1)
     {
-        if (g.GetVertexNeighboursBegin(*v1) != g.GetVertexNeighboursEnd(*v1))
-            map[v1->first] = g.GetVertexNeighboursBegin(*v1)->Destination.first;
+        for (typename TGraph<T>::TConstEdgeIterator edge = g.GetVertexNeighboursBegin(*v1); edge != g.GetVertexNeighboursEnd(*v1); ++edge)
+        {
+            map.insert(std::make_pair(v1->first, edge->Destination.first));
+        }
     }
-    out << map.size() << std::endl;
     
-    for (typename std::map<std::string, std::string>::const_iterator it = map.begin(); it != map.end(); ++it)
+    out << map.size() << std::endl;
+    for (typename std::multimap<std::string, std::string>::const_iterator it = map.begin(); it != map.end(); ++it)
     {
         out << it->first << " " << it->second << std::endl;
     }
-    
-    return out;
 }
 
 template <typename T>
@@ -178,22 +176,40 @@ void work(TGraph<T> &g)
             if (*v1 == *v2)
                 continue;
             
-            for (typename std::vector<segment>::const_iterator s = ditches.begin(); s != ditches.end(); ++s)
+            float path = ::distance(*v1, *v2);
+            
+            if (ditches.empty() == true)
             {
-                if (intersect(s->first, s->second, v1->second, v2->second) == false)
+                g.AddEdge(*v1, *v2, path);
+                g.AddEdge(*v2, *v1, path);
+            }
+            else
+            {
+                bool isPossible = true;
+                for (typename std::vector<segment>::const_iterator s = ditches.begin(); s != ditches.end(); ++s)
                 {
-                    float path = distance(*v1, *v2);
+                    if (intersect(s->first, s->second, v1->second, v2->second) == true)
+                    {
+                        isPossible = false;
+                    }
+                }
+                if (isPossible)
+                {
                     g.AddEdge(*v1, *v2, path);
                     g.AddEdge(*v2, *v1, path);
                 }
             }
         }
     }
+    
+//    std::cout << g << std::endl;
+    
     if (g.condensation().size() == 1)
     {
         std::cout << "YES" << std::endl;
         TGraph<T> tree = minSpanningTree(g, *g.GetVerticesBegin());
-        std::cout << tree;
+//        std::cout << tree;
+        out(std::cout, tree);
     }
     else
     {

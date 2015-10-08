@@ -16,7 +16,11 @@ private:
     typedef std::map<TNode, TAdjValue> TAdjacencies;
     TAdjacencies Adjacencies;
     
-    void strong(const TNode &vertex, std::map<TNode, std::pair<std::pair<size_t, size_t>, bool> > &indexes, std::stack<TNode> &stack, std::set<std::set<TNode> > &stronglyConnected) const;
+    void strong(const TNode &vertex,
+                std::map<TNode, std::pair<std::pair<size_t, size_t>, bool> > &indexes,
+                std::stack<TNode> &stack,
+                std::set<std::set<TNode> > &stronglyConnected) const;
+    
     void DFSVisit(const TNode &vertex, size_t &time, std::map<TNode, std::pair<size_t, size_t> > &schedule) const;
     
 public:
@@ -109,4 +113,5 @@ public:
     
     template <typename T>
     friend std::ostream &operator <<(std::ostream &os, const TGraph<T> &g);
+
 };
