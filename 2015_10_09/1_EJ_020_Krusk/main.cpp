@@ -11,11 +11,10 @@ std::ostream &operator <<(std::ostream &out, const std::pair<T, V> &p)
 #include <vector>
 #include <cmath>
 #include <map>
-#include <unordered_map>
 #include <queue>
 
-#define max(x, y) ((x)>(y) ? (x) : (y))
-#define min(x, y) ((x)<(y) ? (x) : (y))
+//#define max(x, y) ((x)>(y) ? (x) : (y))
+//#define min(x, y) ((x)<(y) ? (x) : (y))
 
 typedef std::pair<int, int> point;
 typedef std::pair<point, point> segment;
@@ -30,7 +29,7 @@ inline int area (pt a, pt b, pt c) {
 inline bool intersect_1 (int a, int b, int c, int d) {
     if (a > b)  std::swap (a, b);
     if (c > d)  std::swap (c, d);
-    return max(a,c) <= min(b,d);
+    return fmax(a,c) <= fmin(b,d);
 }
 
 bool intersect (pt a, pt b, pt c, pt d) {
