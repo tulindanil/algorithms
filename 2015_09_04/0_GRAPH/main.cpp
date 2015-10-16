@@ -29,10 +29,11 @@ std::ostream &operator <<(std::ostream &out, const std::map<T, K> &map)
     }
     return out;
 }
+
 #include <Graph.hpp>
 
 template<typename T>
-std::istream &operator >>(std::istream &in, TGraph<T> &g)
+std::istream &operator >>(std::istream &in, graph<T> &g)
 {
     size_t vertices, edges;
     
@@ -62,7 +63,7 @@ std::istream &operator >>(std::istream &in, TGraph<T> &g)
 };
 
 template <typename T>
-void dfs(std::ostream &out, const TGraph<T> &g)
+void dfs(std::ostream &out, const graph<T> &g)
 {
     std::map<T, std::pair<size_t, size_t>> sch =  g.DFS();
     for (auto pair = sch.begin(); pair != sch.end(); ++pair)
@@ -72,12 +73,12 @@ void dfs(std::ostream &out, const TGraph<T> &g)
 }
 
 template <typename TNode>
-void DFSVisit(const TGraph<TNode> &g, const TNode &vertex, size_t &time, std::map<TNode, std::pair<size_t, size_t>> &schedule)
+void DFSVisit(const graph<TNode> &g, const TNode &vertex, size_t &time, std::map<TNode, std::pair<size_t, size_t>> &schedule)
 {
     schedule[vertex] = std::make_pair(time, 0);
     time++;
     
-    for (auto eIt = g.GetVertexNeighboursBegin(vertex), eEnd = g.GetVertexNeighboursEnd(vertex); eIt != eEnd; ++eIt)
+    for (auto eIt = g.begin(vertex), eEnd = g.end(vertex); eIt != eEnd; ++eIt)
     {
         if (!schedule.count(eIt->Destination) && schedule[eIt->Destination].second == 0)
         {
@@ -90,12 +91,12 @@ void DFSVisit(const TGraph<TNode> &g, const TNode &vertex, size_t &time, std::ma
 }
 
 template <typename TNode>
-std::map<TNode, std::pair<size_t, size_t>> DFS(const TGraph<TNode> &g)
+std::map<TNode, std::pair<size_t, size_t>> DFS(const graph<TNode> &g)
 {
     std::map<TNode, std::pair<size_t, size_t>> output;
     size_t time = 1;
     
-    for (auto eIt = g.GetVerticesBegin(), eEnd = g.GetVerticesEnd(); eIt != eEnd; ++eIt)
+    for (auto eIt = g.begin(), eEnd = g.end(); eIt != eEnd; ++eIt)
     {
         if (!output.count(*eIt))
         {
@@ -107,11 +108,11 @@ std::map<TNode, std::pair<size_t, size_t>> DFS(const TGraph<TNode> &g)
 }
 
 template <typename TNode>
-void DFSVisit(const TGraph<TNode> &g, const TNode &vertex, std::vector<TNode> &comp, std::map<TNode, bool> &used)
+void DFSVisit(const graph<TNode> &g, const TNode &vertex, std::vector<TNode> &comp, std::map<TNode, bool> &used)
 {
     used[vertex] = true;
     comp.push_back(vertex);
-    for (auto eIt = g.GetVertexNeighboursBegin(vertex), eEnd = g.GetVertexNeighboursEnd(vertex); eIt != eEnd; ++eIt)
+    for (auto eIt = g.begin(vertex), eEnd = g.end(vertex); eIt != eEnd; ++eIt)
     {
         if (!used[eIt->Destination])
         {
@@ -121,12 +122,12 @@ void DFSVisit(const TGraph<TNode> &g, const TNode &vertex, std::vector<TNode> &c
 }
 
 template <typename TNode>
-std::vector<std::vector<TNode>> StronglyConnectedComponents(const TGraph<TNode> &g)
+std::vector<std::vector<TNode>> StronglyConnectedComponents(const graph<TNode> &g)
 {
     std::vector<std::vector<TNode>> stronglyConnectedComponents;
     
     std::map<TNode, std::pair<size_t, size_t>> schedule = DFS(g);
-    TGraph<TNode> transposedGraph = g.transposedGraph();
+    graph<TNode> transposedGraph = g.transposedGraph();
     
     std::map<TNode, bool> used;
     
@@ -162,7 +163,7 @@ std::vector<std::vector<TNode>> StronglyConnectedComponents(const TGraph<TNode> 
 }
 
 template <typename T>
-void sccCosarajy(std::ostream &out, const TGraph<T> &g)
+void sccCosarajy(std::ostream &out, const graph<T> &g)
 {
     std::vector<std::vector<T>> scc = StronglyConnectedComponents(g);
     for (auto component: scc)
@@ -176,7 +177,7 @@ void sccCosarajy(std::ostream &out, const TGraph<T> &g)
 }
 
 template <typename T>
-void sccTarjan(std::ostream &out, const TGraph<T> &g)
+void sccTarjan(std::ostream &out, const graph<T> &g)
 {
     std::set<std::set<T>> scc = g.SCC();
     for (auto component: scc)
@@ -190,9 +191,9 @@ void sccTarjan(std::ostream &out, const TGraph<T> &g)
 }
 
 template <typename T>
-void condensed(std::ostream &out, const TGraph<T> &g)
+void condensed(std::ostream &out, const graph<T> &g)
 {
-    TGraph<std::set<T> > condensation = g.condensation();
+    graph<std::set<T> > condensation = g.condensation();
     out << condensation;
 }
 
@@ -202,7 +203,7 @@ void work()
     std::string input;
     std::cin >> input;
 
-    TGraph<T> g;
+    graph<T> g;
     std::cin >> g;
     
     if (input == "dfs")

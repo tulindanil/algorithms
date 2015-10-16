@@ -7,7 +7,7 @@
 #include <vector>
 
 template<typename TNode>
-class TGraph
+class graph
 {
     
 private:
@@ -17,11 +17,15 @@ private:
     TAdjacencies Adjacencies;
     
     void strong(const TNode &vertex,
-                std::map<TNode, std::pair<std::pair<size_t, size_t>, bool> > &indexes,
+                std::map<TNode,
+                std::pair<std::pair<size_t, size_t>, bool> > &indexes,
                 std::stack<TNode> &stack,
                 std::set<std::set<TNode> > &stronglyConnected) const;
     
-    void DFSVisit(const TNode &vertex, size_t &time, std::map<TNode, std::pair<size_t, size_t> > &schedule) const;
+    void DFSVisit(const TNode &vertex,
+                  size_t &time,
+                  std::map<TNode,
+                  std::pair<size_t, size_t> > &schedule) const;
     
 public:
     
@@ -29,11 +33,11 @@ public:
     
     inline size_t size() const;
     
-    TGraph();
-    TGraph(const TGraph &);
-    //explicit TGraph(const std::vector<std::pair<TNode, TNode> >& edges);
+    graph();
+    graph(const graph &);
+    explicit graph(const std::vector<std::pair<TNode, TNode> >& edges);
     
-    class TConstVertexIterator
+    class const_iterator
     {
         
     private:
@@ -42,76 +46,83 @@ public:
         
     public:
         
-        TConstVertexIterator(const TConstVertexIterator&);
-        TConstVertexIterator &operator = (const TConstVertexIterator&);
-        TConstVertexIterator(typename TAdjacencies::const_iterator it);
+        const_iterator(const const_iterator&);
+        const_iterator &operator = (const const_iterator&);
+        const_iterator(typename TAdjacencies::const_iterator it);
         
         const TNode& operator*() const;
         const TNode* operator->() const;
-        bool operator == (const TConstVertexIterator&) const;
-        bool operator != (const TConstVertexIterator&) const;
-        TConstVertexIterator& operator++();
+        bool operator == (const const_iterator&) const;
+        bool operator != (const const_iterator&) const;
+        const_iterator& operator++();
         
     };
     
-    TConstVertexIterator GetVerticesBegin() const;
-    TConstVertexIterator GetVerticesEnd() const;
+    const_iterator begin() const;
+    const_iterator end() const;
     
     bool HasVertex(const TNode&) const;
     
-    struct TEdge
+    struct edge
     {
         TNode Source;
         TNode Destination;
         float weight;
+        
+        bool operator <(const edge &rhs) const
+        {
+            if (Source != rhs.Source)
+                return Source < rhs.Source;
+            return Destination < rhs.Destination;
+        }
     };
     
-    class TConstEdgeIterator
+    class const_edge_iterator
     {
         
     private:
         
         bool isInit;
         typename TAdjValue::const_iterator InternalIt;
-        TEdge InternalEdge;
+        edge InternalEdge;
         
         void Initialize();
         
     public:
         
-        TConstEdgeIterator(const TNode& source, typename TAdjValue::const_iterator it);
-        TConstEdgeIterator(const TConstEdgeIterator&);
-        TConstEdgeIterator& operator=(const TConstEdgeIterator&);
+        const_edge_iterator(const TNode& source, typename TAdjValue::const_iterator it);
+        const_edge_iterator(const const_edge_iterator&);
+        const_edge_iterator& operator=(const const_edge_iterator&);
         
-        const TEdge &operator* ();
-        const TEdge *operator-> ();
-        bool operator == (const TConstEdgeIterator&) const;
-        bool operator != (const TConstEdgeIterator&) const;
-        TConstEdgeIterator &operator++ ();
+        const edge &operator* ();
+        const edge *operator-> ();
+        bool operator == (const const_edge_iterator&) const;
+        bool operator != (const const_edge_iterator&) const;
+        const_edge_iterator &operator++ ();
         
     };
     
-    TConstEdgeIterator GetVertexNeighboursBegin(const TNode&) const;
-    TConstEdgeIterator GetVertexNeighboursEnd(const TNode&) const;
+    const_edge_iterator begin(const TNode&) const;
+    const_edge_iterator end(const TNode&) const;
     
     bool AddVertex(const TNode&);
     bool AddEdge(const TNode&, const TNode&, const float weight);
     
     bool DeleteVertex(const TNode &);
     
-    TGraph<TNode> transposedGraph() const;
+    graph<TNode> transposedGraph() const;
     
     std::map<TNode, TNode> BFS(const TNode &v0) const;
     std::map<TNode, std::pair<size_t, size_t> > DFS() const;
     
     std::pair<std::map<TNode, float>, std::map<TNode, TNode> > dijkstra(const TNode &sourceVertex) const;
-    std::pair<std::vector<TNode>, float> shortestPath(const TNode &source, const TNode &destination) const;
+    std::pair<std::vector<TNode>, float> shortestPath(const TNode &source,
+                                                      const TNode &destination) const;
     
     std::set<std::set<TNode> > SCC() const;
-    std::set<std::set<TNode> > SCC2() const;
-    TGraph<std::set<TNode> > condensation() const;
+    graph<std::set<TNode> > condensation() const;
     
     template <typename T>
-    friend std::ostream &operator <<(std::ostream &os, const TGraph<T> &g);
+    friend std::ostream &operator <<(std::ostream &os, const graph<T> &g);
 
 };
