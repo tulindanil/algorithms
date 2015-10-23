@@ -36,58 +36,28 @@ std::ostream &operator <<(std::ostream &os, std::vector<T> &v)
 #include "Graph.hpp"
 #include "MaxFlow.cpp"
 
-void workOutUpCell(graph<std::pair<int, int> > &g,
-                   const std::vector<std::vector<bool> > &deck, 
-                   const size_t size, 
-                   const std::pair<int, int> &currentCell)
+struct movement
 {
-    size_t row = currentCell.first, column = currentCell.second;
-    if (row == 0 || deck.at(row - 1).at(column) == 1)
+    int dx, dy;
+    movement(int dx, int dy): dx(dx), dy(dy) { }
+};
+
+void shift(graph<std::pair<int, int> > &g,
+                          const std::vector<std::vector<bool> > &deck,
+                          const movement &move,
+                          const size_t size,
+                          const std::pair<int, int> &currentCell)
+{
+    int row = currentCell.first + move.dx;
+    int column = currentCell.second + move.dy;
+
+    if ((row < 0 || row == size) || (column < 0 || column == size) || deck.at(row).at(column) == true)
         return;
 
-    std::pair<int, int> upCell = std::make_pair(row - 1, column);
-    g.AddEdge(currentCell, upCell, 1);
-}
+    std::pair<int, int> cell = std::make_pair(row, column); 
 
-void workOutDownCell(graph<std::pair<int, int> > &g,
-                     const std::vector<std::vector<bool> > &deck, 
-                     const size_t size, 
-                     const std::pair<int, int> &currentCell)
-{
-    size_t row = currentCell.first, column = currentCell.second;
-    if (row == size - 1 || deck.at(row + 1).at(column) == 1)
-        return;
-
-    std::pair<int, int> downCell = std::make_pair(row + 1, column);
-    g.AddVertex(downCell);
-    g.AddEdge(currentCell, downCell, 1);
-}
-
-void workOutLeftCell(graph<std::pair<int, int> > &g,
-                     const std::vector<std::vector<bool> > &deck, 
-                     const size_t size, 
-                     const std::pair<int, int> &currentCell)
-{
-    size_t row = currentCell.first, column = currentCell.second;
-    if (column == 0 || deck.at(row).at(column - 1) == 1)
-        return;
-
-    std::pair<int, int> leftCell = std::make_pair(row, column - 1);
-    g.AddEdge(currentCell, leftCell, 1);
-}
-
-void workOutRightCell(graph<std::pair<int, int> > &g,
-                      const std::vector<std::vector<bool> > &deck, 
-                      const size_t size, 
-                      const std::pair<int, int> &currentCell)
-{
-    size_t row = currentCell.first, column = currentCell.second;
-    if (column == size - 1 || deck.at(row).at(column + 1) == 1)
-        return;
-
-    std::pair<int, int> rightCell = std::make_pair(row, column + 1);
-    g.AddVertex(rightCell);
-    g.AddEdge(currentCell, rightCell, 1);
+    g.AddVertex(cell);
+    g.AddEdge(currentCell, cell, 1);
 }
 
 void readGraph(std::istream &is,
@@ -98,6 +68,7 @@ void readGraph(std::istream &is,
     size_t size = 0;
     is >> size;
 
+    movement moves[] = {movement(-1, 0), movement(1, 0), movement(0, 1), movement(0, -1)};
     std::vector<std::vector<bool> > deck(size, std::vector<bool>(size, 0));
 
     for (size_t row = 0; row < size; ++row)
@@ -117,32 +88,22 @@ void readGraph(std::istream &is,
     {
         for (size_t column = 0; column < size; ++column)
         {
-            if (deck[row][column] == 1)
+            if (deck[row][column] == true)
                 continue;
 
             std::pair<int, int> cell = std::make_pair(row, column);
-
             g.AddVertex(cell);
 
-            bool isWhite = ((row % 2 == 0) && (column % 2 == 0)) ||
-                           ((row % 2 == 1) && (column % 2 == 1));
-
+            bool isWhite = (row + column) % 2;
             bool isBlack = !isWhite;
-
-//            bool isBlack = ((row % 2 == 0) && (column % 2 == 1)) ||
-//                           ((row % 2 == 1) && (column % 2 == 0));
 
             if (isWhite == true)
             {
                 g.AddEdge(source, cell, 1);
-
-                workOutUpCell(g, deck, size, cell);
-                workOutLeftCell(g, deck, size, cell);
-                workOutRightCell(g, deck, size, cell);
-                workOutDownCell(g, deck, size, cell);
+                for (size_t i = 0; i < 4; ++i)
+                    shift(g, deck, moves[i], size, cell);
             }
-
-            if (isBlack == true)
+            else if (isBlack == true)
                 g.AddEdge(cell, target, 1);
         }
     }
