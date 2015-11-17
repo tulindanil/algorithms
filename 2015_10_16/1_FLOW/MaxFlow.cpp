@@ -1,105 +1,123 @@
-template <typename T>
-bool isReachable(const graph<T> &g, const T &s, const T &t, const std::map<T, T> destinyMap)
-{
-    if (destinyMap.find(t) != destinyMap.end())
-        return true;
-    return false;
+#include <queue>
+#include <cassert>
+
+std::ostream& operator <<(std::ostream& os, const std::vector<int> &v) {
+    for (std::vector<int>::const_iterator it = v.begin(); it != v.end(); ++it)
+        os << *it << " ";
+    os << std::endl;
+    return os;
 }
 
-template <typename T>
-std::vector<T> findPath(const graph<T> &g, const T &s, const T &t)
-{
-    std::map<T, T> destinyMap = g.BFS(s);
-    if (isReachable(g, s, t, destinyMap) == false)
-        return std::vector<T>();
+template<class F>
+class flow {
+    
+public:
+    
+    typedef int T;
 
-    std::vector<T> path;
+    typedef std::vector<F> row;
+    typedef std::vector<row> matrix;
 
-    T current_vertex = t;
-    while (current_vertex != s)
-    {
-        path.push_back(current_vertex);
-        current_vertex = destinyMap[current_vertex];
+    static F getMaxFlow(const matrix& capacity,
+                        const T& source,
+                        const T& target) {
+        flow<F> instance(capacity);
+        return instance.maxFlow(source, target);
     }
-    path.push_back(s);
-    std::reverse(path.begin(), path.end());
+    
+private:
+    
+    matrix flows;
+    matrix capacity;
+    
+    typedef std::vector<T> path;
 
-    return path;
-}
-
-template <typename T>
-float resudialCapacity(const graph<T> &g,
-                       const std::map<std::pair<T, T>, float> &flows,
-                       const std::map<std::pair<T, T>, float> &capacity,
-                       const T &src,
-                       const T &dst)
-{
-    std::pair<T, T> pair = std::make_pair(src, dst);
-    if (g.hasEdge(src, dst) == true)
-        return capacity.find(pair)->second - flows.find(pair)->second;
-    else if(g.hasEdge(dst, src) == true)
-        return -flows.find(pair)->second;
-
-    return 0;
-}
-
-template <typename T>
-float maxFlow(const graph<T> &g, const T &source, const T &target)
-{
-    graph<T> resudial_net = g;
-    std::map<std::pair<T, T>, float> flows, capacity;
-    for (typename graph<T>::const_iterator vertex = g.begin(); vertex != g.end(); ++vertex)
-    {
-        for (typename graph<T>::const_edge_iterator edge = g.begin(*vertex); edge != g.end(*vertex); ++edge)
-        {
-            std::pair<T, T> pair = std::make_pair(edge->Source, edge->Destination);
-            std::pair<T, T> r_pair = std::make_pair(pair.second, pair.first);  
-            flows[pair] = 0;
-            flows[r_pair] = 0;
-
-            capacity[pair] = edge->weight;
+    matrix edges;
+    
+    flow(const matrix& capacity)
+                : capacity(capacity),
+                flows(matrix(capacity.size(), row(capacity.size()))),
+                edges(matrix(capacity.size(), row())) { 
+        for (typename matrix::const_iterator row = capacity.begin(); row != capacity.end(); ++row) {
+            for (typename row::const_iterator v = row->begin(); v != row->end(); ++ v) {
+                if (*v > 0) {
+                    edges[row - capacity.begin()].push_back(v - row->begin());
+                    edges[v - row->begin()].push_back(row - capacity.begin());
+                }
+            }
         }
     }
-
-    std::vector<T> path;
-    while((path = findPath(resudial_net, source, target)).size() > 0)
-    {
-        float min_flow = FLT_MAX;
-
-        for (typename std::vector<T>::const_iterator vertex = path.begin(); vertex != path.end() - 1; ++vertex)
-        {
-            std::pair<T, T> pair = std::make_pair(*vertex, *(vertex + 1));
-            float c_flow = resudialCapacity(g, flows, capacity, pair.first, pair.second); 
-            min_flow = min(min_flow, c_flow);
+    
+    F maxFlow(const T& s, const T& t) {
+        path p;
+        while(!(p = findPath(s, t)).empty()) {
+            F pFlow = findPathFlow(p);
+            pushFlowThrowPath(p, pFlow);
         }
-        
-        for (typename std::vector<T>::const_iterator vertex = path.begin(); vertex != path.end() - 1; ++vertex)
-        {
-            std::pair<T, T> pair = std::make_pair(*vertex, *(vertex + 1));
-            std::pair<T, T> rev_pair = std::make_pair(*(vertex + 1), *vertex);
-
-            flows[pair] += min_flow;
-            flows[rev_pair] = -flows[pair];
-
-            if (resudialCapacity(g,
-                                 flows, 
-                                 capacity, 
-                                 pair.first, 
-                                 pair.second) > 0)
-                resudial_net.AddEdge(pair.first, pair.second, 1);
-            else
-                resudial_net.deleteEdge(pair.first, pair.second);
-       }
+        return countMaxFlow(s, t);
     }
-
-    float flow = 0;
-
-    for (typename graph<T>::const_iterator vertex = g.begin(); vertex != g.end(); ++vertex)
-    {
-        if (*vertex == source)
-            continue;
-
-        flow += flows[std::make_pair(source, *vertex)]; 
+    
+    F countMaxFlow(const T& s, const T& t) const {
+        F maxFlow = 0;
+        for (typename matrix::const_iterator v = capacity.begin(); v != capacity.end(); ++v) {
+            if (v - capacity.begin() == t)
+                continue;
+            maxFlow += flows[v - capacity.begin()][t]; 
+        }
+        return maxFlow;
     }
-    return flow;
-}
+    
+    F findPathFlow(const path& p) const {
+        F minFlow = resCap(*p.begin(), *(p.begin() + 1));
+        for (typename path::const_iterator v = p.begin(); v != p.end() - 1; ++v) {
+            minFlow = std::min(minFlow, resCap(*v, *(v + 1)));
+        }
+        return minFlow;
+    }
+    
+    void pushFlowThrowPath(const path& p, const F& pFlow) {
+        for (typename path::const_iterator v = p.begin(); v != p.end() - 1; ++v) {
+            flows[*v][*(v + 1)] += pFlow;
+            flows[*(v + 1)][*v] -= pFlow;
+        }
+    }
+    
+    std::map<T, T> breadth(const T& s) const {
+        std::map<T, T> destinyMap;
+        std::queue<T> queue;
+        queue.push(s);
+        destinyMap[s] = s;
+        while (!queue.empty()) {
+            T v = queue.front();
+            queue.pop();
+            for (typename row::const_iterator n = edges[v].begin(); n != edges[v].end(); ++n) {
+                if (resCap(v, *n) > 0 &&
+                    destinyMap.count(*n) == 0) {
+                    destinyMap[*n] = v;
+                    queue.push(*n);
+                }
+            }
+        }
+        return destinyMap;
+    }
+    
+    path findPath(const T& s, const T& t) const {
+        std::map<T, T> destinyMap = breadth(s);
+        if (destinyMap.find(t) == destinyMap.end())
+            return path();
+        path p;
+        T v = t;
+        while(v != s) {
+            p.push_back(v);
+            v = destinyMap[v];
+        }
+        p.push_back(v);
+        std::reverse(p.begin(), p.end());
+        return p;
+    }
+    
+    inline F resCap(const T& s, const T& t) const {
+        return capacity[s][t] - flows[s][t];
+    }
+    
+};

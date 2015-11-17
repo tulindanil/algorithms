@@ -33,36 +33,59 @@ std::ostream &operator <<(std::ostream &os, std::vector<T> &v)
     return os;
 }
 
-#include "Graph.hpp"
 #include "MaxFlow.cpp"
 
-template <typename T>
-std::istream &operator>>(std::istream &is, graph<T> &g)
-{
-    size_t edges_qty;
-    is >> edges_qty >> edges_qty;
-    for (size_t index = 0; index < edges_qty; ++index)
-    {
-        T src, dst; 
-        float weight;
+template<class W>
+class worker {
+    
+public:
 
-        is >> src >> dst >> weight;
-
-        g.AddVertex(src);
-        g.AddVertex(dst);
-        g.AddEdge(src, dst, weight);
+    static void solve(std::istream &is,
+                      std::ostream& os) {
+        worker<W> w;
+        w.run(is, os); 
     }
 
-    return is;
+private:
+
+    typedef int T;
+    typedef std::vector<W> row;
+    typedef std::vector<row> matrix;
+
+    matrix capacity;
+   
+    void run(std::istream &is, 
+             std::ostream &os) {
+        read(is);
+        T src = 0, trg = capacity.size() - 1;
+        os << flow<W>::getMaxFlow(capacity, src, trg) << std::endl;
+    }
+
+    void read(std::istream &is) {
+        size_t s;
+        is >> s;
+        size_t edges_qty;
+        is >> edges_qty;
+        capacity = matrix(s, row(s));
+        T src, dst; 
+        W weight;
+        for (size_t index = 0; index < edges_qty; ++index) {
+            is >> src >> dst >> weight;
+            src--;
+            dst--;
+            capacity[src][dst] = weight;
+        }
+    }
+};
+
+template<class W>
+void work() {
+    worker<W>::solve(std::cin,
+                     std::cout);
 }
 
 int main()
 {
-    graph<int> g;
-    std::cin >> g;
-    int src = 1, trg = g.size();
-
-    std::cout << maxFlow(g, src, trg) << std::endl;
-
+    work<long long int>();
     return 0;
 }
