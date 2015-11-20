@@ -42,8 +42,8 @@ private:
         for (typename matrix::const_iterator row = capacity.begin(); row != capacity.end(); ++row) {
             for (typename row::const_iterator v = row->begin(); v != row->end(); ++ v) {
                 if (*v > 0) {
-                    edges[row - capacity.begin()].push_back(v - row->begin());
-                    edges[v - row->begin()].push_back(row - capacity.begin());
+                    edges.at(row - capacity.begin()).push_back(v - row->begin());
+                    edges.at(v - row->begin()).push_back(row - capacity.begin());
                 }
             }
         }
@@ -63,7 +63,7 @@ private:
         for (typename matrix::const_iterator v = capacity.begin(); v != capacity.end(); ++v) {
             if (v - capacity.begin() == t)
                 continue;
-            maxFlow += flows[v - capacity.begin()][t]; 
+            maxFlow += flows.at(v - capacity.begin()).at(t); 
         }
         return maxFlow;
     }
@@ -78,8 +78,8 @@ private:
     
     void pushFlowThrowPath(const path& p, const F& pFlow) {
         for (typename path::const_iterator v = p.begin(); v != p.end() - 1; ++v) {
-            flows[*v][*(v + 1)] += pFlow;
-            flows[*(v + 1)][*v] -= pFlow;
+            flows.at(*v).at(*(v + 1)) += pFlow;
+            flows.at(*(v + 1)).at(*v) -= pFlow;
         }
     }
     
@@ -91,7 +91,7 @@ private:
         while (!queue.empty()) {
             T v = queue.front();
             queue.pop();
-            for (typename row::const_iterator n = edges[v].begin(); n != edges[v].end(); ++n) {
+            for (typename row::const_iterator n = edges.at(v).begin(); n != edges.at(v).end(); ++n) {
                 if (resCap(v, *n) > 0 &&
                     destinyMap.count(*n) == 0) {
                     destinyMap[*n] = v;
@@ -118,7 +118,7 @@ private:
     }
     
     inline F resCap(const T& s, const T& t) const {
-        return capacity[s][t] - flows[s][t];
+        return capacity.at(s).at(t) - flows.at(s).at(t);
     }
     
 };
@@ -174,13 +174,13 @@ private:
             std::string s;
             is >> s;
             for (std::string::const_iterator it = s.begin(); it != s.end(); ++it) {
-                deck[row][it - s.begin()] = (*it == '#') ? true : false;
+                deck.at(row).at(it - s.begin()) = (*it == '#') ? true : false;
             }
         }
 
         for (size_t row = 0; row < size; ++row) {
             for (size_t column = 0; column < size; ++column) {
-                if (deck[row][column] == true)
+                if (deck.at(row).at(column) == true)
                     continue;
 
                 std::pair<T, T> cell = std::make_pair(row, column);
@@ -189,12 +189,12 @@ private:
                 bool isBlack = !isWhite;
 
                 if (isWhite == true) {
-                    capacity[src][getIndex(cell)] = 1;
+                    capacity.at(src).at(getIndex(cell)) = 1;
                     for (size_t i = 0; i < 4; ++i)
                         shift(moves[i], cell);
                 }
                 else 
-                    capacity[getIndex(cell)][dst] = 1;
+                    capacity.at(getIndex(cell)).at(dst) = 1;
             }
         }
 
@@ -202,14 +202,14 @@ private:
 
     inline void shift(const movement &move,
                const std::pair<T, T> &currentCell) {
-        T index = getIndex(currentCell) + 3*move.dx + move.dy;
+        T index = getIndex(currentCell) + size*move.dx + move.dy;
         
         T row = currentCell.first + move.dx;
         T column = currentCell.second + move.dy;
 
         if ((row < 0 || row == size) || (column < 0 || column == size) || deck.at(row).at(column) == true)
             return;
-        capacity[getIndex(currentCell)][index] = 1;
+        capacity.at(getIndex(currentCell)).at(index) = 1;
     }
 };
 
@@ -220,6 +220,10 @@ void work() {
 }
 
 int main() {
+    try {
     work<int>();
+    } catch (const std::exception& e) {
+        std::cout << "nana" << std::endl;
+    }
     return 0;
 }
