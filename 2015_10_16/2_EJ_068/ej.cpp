@@ -219,8 +219,7 @@ void work() {
                      std::cout);
 }
 
-int main()
-{
+int main() {
     work<int>();
     return 0;
 }
