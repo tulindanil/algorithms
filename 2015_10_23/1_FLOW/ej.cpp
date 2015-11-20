@@ -6,868 +6,213 @@
 #include <algorithm>
 #include <vector>
 
-template <typename T, typename K>
-std::ostream &operator <<(std::ostream &os, const std::pair<T, K> &p)
-{
-    os << "(" << p.first << ", " << p.second << ")";
+std::ostream& operator <<(std::ostream& os, const std::vector<int> &v) {
+    for (std::vector<int>::const_iterator it = v.begin(); it != v.end(); ++it)
+        os << *it << " ";
+    os << std::endl;
     return os;
 }
 
-template <typename T, typename K>
-std::ostream &operator <<(std::ostream &os, std::map<T, K> &map)
-{
-    for (typename std::map<T, K>::const_iterator it = map.begin(); it != map.end(); ++it)
-    {
-        os << it->first << ", " << it->second << "; "; 
+#include <algorithm>
+
+template<class T>
+std::ostream &operator <<(std::ostream &os, const std::vector<T>& v) {
+    for (typename std::vector<T>::const_iterator it = v.begin(); it != v.end(); ++it) {
+        os << *it << " ";
     }
     return os;
 }
 
-template <typename T>
-std::ostream &operator <<(std::ostream &os, std::vector<T> &v)
-{
-    for (typename std::vector<T>::const_iterator it = v.begin(); it != v.end(); ++it)
-    {
-        os << *it << " "; 
-    }
-    return os;
-}
-
-
-#include <iostream>
-#include <set>
-#include <map>
-#include <stack>
-#include <vector>
-
-template<typename TNode>
-class graph
-{
-    
-private:
-    
-    typedef std::map<TNode, float> TAdjValue;
-    typedef std::map<TNode, TAdjValue> TAdjacencies;
-    TAdjacencies Adjacencies;
-    
-    void strong(const TNode &vertex,
-                std::map<TNode,
-                std::pair<std::pair<size_t, size_t>, bool> > &indexes,
-                std::stack<TNode> &stack,
-                std::set<std::set<TNode> > &stronglyConnected) const;
-    
-    void DFSVisit(const TNode &vertex,
-                  size_t &time,
-                  std::map<TNode,
-                  std::pair<size_t, size_t> > &schedule) const;
-    
+template <typename F>
+class flow {
 public:
-    
-    typedef std::set<TNode> condensed_type;
-    
-    inline size_t size() const;
-    
-    graph();
-    graph(const graph &);
-    explicit graph(const std::vector<std::pair<TNode, TNode> >& edges);
-    
-    class const_iterator
-    {
-        
-    private:
-        
-        typename TAdjacencies::const_iterator InternalIt;
-        
-    public:
-        
-        const_iterator(const const_iterator&);
-        const_iterator &operator = (const const_iterator&);
-        const_iterator(typename TAdjacencies::const_iterator it);
-        
-        const TNode& operator*() const;
-        const TNode* operator->() const;
-        bool operator == (const const_iterator&) const;
-        bool operator != (const const_iterator&) const;
-        const_iterator& operator++();
-        
-    };
-    
-    const_iterator begin() const;
-    const_iterator end() const;
-    
-    bool HasVertex(const TNode&) const;
-    bool hasEdge(const TNode &src, const TNode &dst) const;
-    
 
-    struct edge
-    {
-        TNode Source;
-        TNode Destination;
-        float weight;
-        
-        bool operator <(const edge &rhs) const
-        {
-            if (Source != rhs.Source)
-                return Source < rhs.Source;
-            return Destination < rhs.Destination;
+    typedef int T;
+
+    typedef std::vector<F> row;
+    typedef std::vector<row> matrix;
+
+    static F getMaxFlow(const matrix& cap, const T &s, const T &t) {
+        flow<F> instance(cap);
+        return instance.maxFlow(s, t);
+    }
+
+    flow(const matrix& cap): cap(cap), 
+                             flows(matrix(cap.size(), row(cap.size()))),
+                             excess(cap.size()),
+                             heights(cap.size()),
+                             edges(cap.size()) {
+         for (typename matrix::const_iterator row = cap.begin(); row != cap.end(); ++row) {
+            for (typename row::const_iterator v = row->begin(); v != row->end(); ++v) {
+                if (*v > 0) {
+                    edges[row - cap.begin()].push_back(v - row->begin());
+                    edges[v - row->begin()].push_back(row - cap.begin());
+                }
+            }
         }
-    };
-    
-    class const_edge_iterator
-    {
-        
-    private:
-        
-        bool isInit;
-        typename TAdjValue::const_iterator InternalIt;
-        edge InternalEdge;
-        
-        void Initialize();
-        
-    public:
-        
-        const_edge_iterator(const TNode& source, typename TAdjValue::const_iterator it);
-        const_edge_iterator(const const_edge_iterator&);
-        const_edge_iterator& operator=(const const_edge_iterator&);
-        
-        const edge &operator* ();
-        const edge *operator-> ();
-        bool operator == (const const_edge_iterator&) const;
-        bool operator != (const const_edge_iterator&) const;
-        const_edge_iterator &operator++ ();
-        
-    };
-    
-    const_edge_iterator begin(const TNode&) const;
-    const_edge_iterator end(const TNode&) const;
-    
-    bool AddVertex(const TNode&);
-    bool AddEdge(const TNode&, const TNode&, const float weight);
-    
-    bool DeleteVertex(const TNode &);
-    bool deleteEdge(const TNode&, const TNode&);
+    }
 
-    graph<TNode> transposedGraph() const;
-    
-    std::map<TNode, TNode> BFS(const TNode &v0) const;
-    std::map<TNode, std::pair<size_t, size_t> > DFS() const;
-    
-    std::pair<std::map<TNode, float>, std::map<TNode, TNode> > dijkstra(const TNode &sourceVertex) const;
-    std::pair<std::vector<TNode>, float> shortestPath(const TNode &source,
-                                                      const TNode &destination) const;
-    
-    std::set<std::set<TNode> > SCC() const;
-    graph<std::set<TNode> > condensation() const;
-    
-    template <typename T>
-    friend std::ostream &operator <<(std::ostream &os, const graph<T> &g);
+private:
 
+    matrix flows;
+    matrix cap;
+    matrix edges;
+
+    row excess;
+    row heights;
+
+    inline void prePush(const T& s) {
+        for (typename row::const_iterator v = edges[s].begin(); v != edges[s].end(); ++v) {
+            if (resCap(s, *v) > 0) {
+                flows[s][*v] = cap[s][*v];
+                flows[*v][s] = -cap[s][*v];
+                excess[*v] = cap[s][*v];
+                excess[s] -= cap[s][*v];
+            }
+        }
+    }
+
+    F maxFlow(const T &s, const T &t) {
+        prePush(s); 
+        heights[s] = cap.size();
+    
+        row esnap = excess; 
+        row hsnap = heights;
+
+        while(!excess.empty()) {
+            for (typename row::const_iterator overflowed = excess.begin(); overflowed != excess.end(); ++overflowed) {
+                T index = overflowed - excess.begin();
+                if (*overflowed <= 0 || index == s)
+                    continue;
+
+                for (typename row::const_iterator v = edges[index].begin(); v != edges[index].end(); ++v) {
+                    F resCapacity = resCap(index, *v);
+                    if (resCapacity <= 0)
+                        continue;
+                    if (heights[index] == heights[*v] + 1)
+                        push(index, *v); 
+                    if (*overflowed <= 0)
+                        break;
+                }
+           }
+            for (typename row::const_iterator overflowed = excess.begin(); overflowed != excess.end(); ++overflowed) {
+                T index = overflowed - excess.begin();
+                if (index != t && index != s && excess[index] > 0) {
+                    relabel(index);
+                }
+            }
+
+            bool e = (esnap == excess);
+            bool h = (hsnap == heights);
+
+            if (e && h)
+                break;
+
+            esnap = excess;
+            hsnap = heights;
+        }
+        F value = 0;
+        for (typename matrix::const_iterator row = cap.begin(); row != cap.end(); ++row) {
+            value += flows[row - cap.begin()][t];
+        }
+        return value;
+    }
+
+    inline bool push(const T &s, const T &t) {
+        if (excess[s] <= 0)
+            return false;
+
+
+        F rcap = resCap(s, t);
+        F delta = std::min(rcap, excess[s]);
+
+        flows[s][t] += delta;
+        flows[t][s] -= delta;
+
+        excess[s] -= delta;
+        excess[t] += delta;
+
+        return true;
+    }
+
+    bool relabel(const T &vertex) {
+        F min_height;
+        bool is_init = false;
+        for (typename row::const_iterator v = edges[vertex].begin(); v != edges[vertex].end(); ++v) {
+            F resCapacity = resCap(vertex, *v);
+            if (resCapacity <= 0)
+                continue;
+            if (!is_init) {
+                is_init = true;
+                min_height = heights[*v];
+            }
+            if (heights[vertex] > heights[*v])
+                return false;
+            min_height = std::min(min_height, heights[*v]);
+        }
+        if (!is_init)
+            return false;
+        heights[vertex] = 1 + min_height;
+        return true;
+    }
+
+    inline F resCap(const T &s, const T &t) const {
+        return cap[s][t] - flows[s][t]; 
+    }
 };
 
-
-#include <cfloat>
-#include <stack>
-#include <math.h>
-#include <queue>
-
-#define min(x, y) (((x) > (y)) ? (y) : (x))
-
-template <typename TNode>
-graph<TNode>::graph()
-{
+template<class W>
+class worker {
     
-}
+public:
 
-template <typename TNode>
-graph<TNode>::graph(const graph<TNode>& g): Adjacencies(g.Adjacencies)
-{
-    
-}
-
-template <typename TNode>
-inline size_t graph<TNode>::size() const
-{
-    return Adjacencies.size();
-}
-
-template <typename TNode>
-bool graph<TNode>::AddEdge(const TNode &src, const TNode &dst, const float weight)
-{
-    typename std::map<TNode, TAdjValue>::iterator srcIt;
-    if ((srcIt = Adjacencies.find(src)) == Adjacencies.end())
-        return false;
-    
-    if (srcIt->second.find(dst) != srcIt->second.end())
-        return false;
-    
-    srcIt->second.insert(std::make_pair(dst, weight));
-    
-    return true;
-}
-
-template <typename TNode>
-bool graph<TNode>::AddVertex(const TNode &node)
-{
-    if(Adjacencies.find(node) != Adjacencies.end())
-        return false;
-    
-    Adjacencies[node] = TAdjValue();
-    
-    return true;
-}
-
-template <typename T>
-bool graph<T>::DeleteVertex(const T &vertex)
-{
-    for (typename TAdjacencies::iterator it = Adjacencies.begin(); it != Adjacencies.end(); ++it)
-    {
-        it->second.erase(vertex);
-    }
-    Adjacencies.erase(vertex);
-    
-    return true;
-}
-
-template <typename T>
-bool graph<T>::deleteEdge(const T &src, const T &dst)
-{
-    if (Adjacencies.find(src) == Adjacencies.end()
-        || Adjacencies.find(src)->second.find(dst) == Adjacencies.find(src)->second.end())
-        return false;
-
-    Adjacencies.find(src)->second.erase(dst);
-    return true;
-}
-
-template <typename TNode>
-graph<TNode> graph<TNode>::transposedGraph() const
-{
-    graph<TNode> transposedGraph;
-    
-    for (typename graph<TNode>::const_iterator vIt = begin(), vItEnd = end(); vIt != vItEnd; ++vIt)
-    {
-        transposedGraph.AddVertex(*vIt);
-    }
-    
-    for (typename graph<TNode>::const_iterator vIt = begin(), vItEnd = end(); vIt != vItEnd; ++vIt)
-    {
-        for (typename graph<TNode>::const_edge_iterator edgeIt = begin(*vIt), edgeItEnd = end(*vIt); edgeIt != edgeItEnd; ++edgeIt)
-        {
-            transposedGraph.AddEdge(edgeIt->Destination, edgeIt->Source, edgeIt->weight);
-        }
-    }
-    
-    return transposedGraph;
-}
-
-template <typename T>
-bool graph<T>::hasEdge(const T &src, const T &dst) const
-{
-    if (Adjacencies.find(src) == Adjacencies.end()
-         || Adjacencies.find(src)->second.find(dst) == Adjacencies.find(src)->second.end())
-         return false;
-
-    return true;
-}
-
-
-template <typename TNode>
-graph<TNode>::const_iterator::const_iterator(typename graph<TNode>::TAdjacencies::const_iterator it): InternalIt(it)
-{
-    
-}
-
-template <typename TNode>
-graph<TNode>::const_iterator::const_iterator(const graph<TNode>::const_iterator &rhs): InternalIt(rhs.InternalIt)
-{
-    
-}
-
-template<typename TNode>
-typename graph<TNode>::const_iterator &graph<TNode>::const_iterator::operator = (const graph<TNode>::const_iterator& rhs)
-{
-    InternalIt = rhs.InternalIt;
-    return *this;
-}
-
-template<typename TNode>
-const TNode& graph<TNode>::const_iterator::operator*() const
-{
-    return InternalIt->first;
-}
-
-template<typename TNode>
-const TNode* graph<TNode>::const_iterator::operator->() const
-{
-    return &(InternalIt->first);
-}
-
-template<typename TNode>
-bool graph<TNode>::const_iterator::operator==(const graph<TNode>::const_iterator& rhs) const
-{
-    return InternalIt == rhs.InternalIt;
-}
-
-template<typename TNode>
-bool graph<TNode>::const_iterator::operator!=(const graph<TNode>::const_iterator& rhs) const
-{
-    return InternalIt != rhs.InternalIt;
-}
-
-template<typename TNode>
-typename graph<TNode>::const_iterator &graph<TNode>::const_iterator::operator++ ()
-{
-    ++InternalIt;
-    return *this;
-}
-
-template<typename TNode>
-typename graph<TNode>::const_iterator graph<TNode>::begin() const
-{
-    return const_iterator(Adjacencies.begin());
-}
-
-template<typename TNode>
-typename graph<TNode>::const_iterator graph<TNode>::end() const
-{
-    return const_iterator(Adjacencies.end());
-}
-
-
-template<typename TNode>
-void graph<TNode>::const_edge_iterator::Initialize()
-{
-    if (!isInit)
-    {
-        isInit = true;
-        InternalEdge.Destination = InternalIt->first;
-        InternalEdge.weight = InternalIt->second;
-    }
-}
-
-template<typename TNode>
-graph<TNode>::const_edge_iterator::const_edge_iterator(const TNode& source, typename graph<TNode>::TAdjValue::const_iterator it): InternalIt(it), isInit(false)
-{
-    InternalEdge.Source = source;
-}
-
-template<typename TNode>
-graph<TNode>::const_edge_iterator::const_edge_iterator(const const_edge_iterator &rhs): InternalIt(rhs.InternalIt), InternalEdge(rhs.InternalEdge)
-{
-    
-}
-
-template<typename TNode>
-typename graph<TNode>::const_edge_iterator &graph<TNode>::const_edge_iterator::operator=(const graph<TNode>::const_edge_iterator& rhs)
-{
-    InternalIt = rhs.InternalIt;
-    InternalEdge = rhs.InternalEdge;
-    return *this;
-}
-
-template<typename TNode>
-const typename graph<TNode>::edge& graph<TNode>::const_edge_iterator::operator*()
-{
-    Initialize();
-    return InternalEdge;
-}
-
-template<typename TNode>
-const typename graph<TNode>::edge* graph<TNode>::const_edge_iterator::operator->()
-{
-    Initialize();
-    return &InternalEdge;
-}
-
-template<typename TNode>
-bool graph<TNode>::const_edge_iterator::operator== (const graph<TNode>::const_edge_iterator& rhs) const
-{
-    return InternalIt == rhs.InternalIt;
-}
-
-template<typename TNode>
-bool graph<TNode>::const_edge_iterator::operator!= (const graph<TNode>::const_edge_iterator& rhs) const
-{
-    return InternalIt != rhs.InternalIt;
-}
-
-template<typename TNode>
-typename graph<TNode>::const_edge_iterator &graph<TNode>::const_edge_iterator::operator++ ()
-{
-    ++InternalIt;
-    isInit = false;
-    return *this;
-}
-
-template<typename TNode>
-typename graph<TNode>::const_edge_iterator graph<TNode>::begin(const TNode& v) const
-{
-    typename TAdjacencies::const_iterator it = Adjacencies.find(v);
-    if (it != Adjacencies.end())
-    {
-        return const_edge_iterator(v, it->second.begin());
-    }
-    abort();
-}
-
-template<typename TNode>
-typename graph<TNode>::const_edge_iterator graph<TNode>::end(const TNode& v) const
-{
-    typename TAdjacencies::const_iterator it = Adjacencies.find(v);
-    if (it != Adjacencies.end())
-    {
-        return const_edge_iterator(v, it->second.end());
-    }
-    abort();
-}
-
-
-template<typename TNode>
-std::map<TNode, TNode> graph<TNode>::BFS(const TNode &v0) const
-{
-    std::map<TNode, TNode> backEdges;
-    std::queue<TNode> queue;
-    queue.push(v0);
-    backEdges[v0] = v0;
-    while (!queue.empty())
-    {
-        TNode v = queue.front();
-        queue.pop();
-        for (typename graph<TNode>::const_edge_iterator eIt = begin(v), eEnd = end(v); eIt != eEnd; ++eIt)
-        {
-            if (backEdges.find(eIt->Destination) == backEdges.end())
-            {
-                backEdges[eIt->Destination] = eIt->Source;
-                queue.push(eIt->Destination);
-            }
-        }
-    }
-    return backEdges;
-}
-
-
-template <typename TNode>
-void graph<TNode>::DFSVisit(const TNode &vertex, size_t &time, std::map<TNode, std::pair<size_t, size_t> > &schedule) const
-{
-    schedule[vertex] = std::make_pair(time, 0);
-    time++;
-    
-    for (typename graph<TNode>::const_edge_iterator eIt = begin(vertex), eEnd = end(vertex); eIt != eEnd; ++eIt)
-    {
-        if (!schedule.count(eIt->Destination) && schedule[eIt->Destination].second == 0)
-        {
-            DFSVisit(eIt->Destination, time, schedule);
-        }
-    }
-    
-    schedule[vertex] = std::make_pair(schedule[vertex].first, time);
-    time++;
-}
-
-template <typename TNode>
-std::map<TNode, std::pair<size_t, size_t> > graph<TNode>::DFS() const
-{
-    std::map<TNode, std::pair<size_t, size_t> > output;
-    size_t time = 1;
-    
-    for (typename graph<TNode>::const_iterator eIt = begin(), eEnd = end(); eIt != eEnd; ++eIt)
-    {
-        if (!output.count(*eIt))
-        {
-            DFSVisit(*eIt, time, output);
-        }
-    }
-    
-    return output;
-}
-
-
-
-size_t f(size_t fst, size_t snd);
-template <typename T>
-std::pair<std::vector<T>, float> graph<T>::shortestPath(const T &source, const T &destination) const
-{
-    std::map<T, float> g_score;
-    std::map<T, float> f_score;
-    
-    std::set<T> closed_set, open_set;
-    open_set.insert(source);
-    
-    g_score[source] = 0;
-    f_score[source] = 0 + f(source, destination);
-    
-    
-    std::set<std::pair<float, T> > queue;
-    queue.insert(std::make_pair(f_score[source], source));
-    
-    while (open_set.empty() == false)
-    {
-        T current = queue.begin()->second;
-        
-        if (current == destination)
-            return std::make_pair(std::vector<T>(), g_score[destination]);
-        
-        open_set.erase(current);
-        queue.erase(queue.begin());
-        closed_set.insert(current);
-        
-        for (typename graph<T>::const_edge_iterator TNode = this->begin(current); TNode != this->end(current); ++TNode)
-        {
-            if (closed_set.find(TNode->Destination) != closed_set.end())
-                continue;
-            
-            float alternativeWeight = g_score[current] + TNode->weight;
-            if (alternativeWeight < g_score[TNode->Destination] || open_set.find(TNode->Destination) == open_set.end())
-            {
-                g_score[TNode->Destination] = alternativeWeight;
-                
-                if (open_set.find(TNode->Destination) == open_set.end())
-                {
-                    queue.insert(std::make_pair(f_score[TNode->Destination], TNode->Destination));
-                    open_set.insert(TNode->Destination);
-                }
-                else
-                {
-                    queue.erase(queue.find(std::make_pair(f_score[TNode->Destination], TNode->Destination)));
-                    queue.insert(std::make_pair(alternativeWeight + f(TNode->Destination, destination), TNode->Destination));
-                }
-                
-                f_score[TNode->Destination] = alternativeWeight + f(TNode->Destination, destination);
-            }
-        }
-    }
-    return std::make_pair(std::vector<T>(), g_score[destination]);
-}
-
-
-template <typename T>
-std::pair<std::map<T, float>, std::map<T, T> > graph<T>::dijkstra(const T &sourceVertex) const
-{
-    std::map<T, float> destinations;
-    std::map<T, T> paths;
-    
-    destinations[sourceVertex] = 0;
-    std::set<std::pair<float, T> > queue;
-    
-    for (typename graph<T>::const_iterator vertex = this->begin(); vertex != this->end(); ++vertex)
-    {
-        if (sourceVertex != *vertex)
-            destinations[*vertex] = FLT_MAX / 2;
-        
-        queue.insert(std::make_pair(destinations[*vertex], *vertex));
-    }
-    
-    while (queue.empty() == false)
-    {
-        std::pair<float, T> pair = *queue.begin();
-        queue.erase(queue.begin());
-        
-        for (typename graph<T>::const_edge_iterator TNode = this->begin(pair.second); TNode != this->end(pair.second); ++TNode)
-        {
-            float alternativeWeight = pair.first + TNode->weight;
-            if (alternativeWeight < destinations[TNode->Destination])
-            {
-                std::pair<float, T> dst = *queue.find(std::make_pair(destinations[TNode->Destination], TNode->Destination));
-                queue.erase(dst);
-                
-                destinations[TNode->Destination] = alternativeWeight;
-                dst.first = alternativeWeight;
-                
-                queue.insert(std::make_pair(destinations[TNode->Destination], TNode->Destination));
-                
-                paths[TNode->Destination] = pair.second;
-            }
-        }
-    }
-    return std::make_pair(destinations, paths);
-}
-
-
-template <typename T>
-void graph<T>::strong(const T &vertex, std::map<T, std::pair<std::pair<size_t, size_t>, bool> > &indexes, std::stack<T> &stack, std::set<std::set<T> > &stronglyConnected) const
-{
-    indexes[vertex] = std::make_pair(std::make_pair(indexes.size(), indexes.size()), true);
-    stack.push(vertex);
-    
-    for (typename graph<T>::const_edge_iterator TNode = this->begin(vertex); TNode != this->end(vertex); ++TNode)
-    {
-        if (indexes.find(TNode->Destination) == indexes.end())
-        {
-            strong(TNode->Destination, indexes, stack, stronglyConnected);
-            indexes[vertex].first.second = min(indexes[vertex].first.second, indexes[TNode->Destination].first.second); // v.lowlink = min(v.lowlink, w.lowlink)
-        }
-        else if (indexes[TNode->Destination].second == true)
-        {
-            indexes[vertex].first.second = min(indexes[vertex].first.second, indexes[TNode->Destination].first.first); // v.lowlink = min(v.lowlink, w.index)
-        }
-    }
-    
-    if (indexes[vertex].first.second == indexes[vertex].first.first)
-    {
-        std::set<T> set;
-        T prev;
-        do
-        {
-            prev = stack.top();
-            stack.pop();
-            indexes[prev].second = false;
-            set.insert(prev);
-            
-        } while (prev != vertex);
-        stronglyConnected.insert(set);
-    }
-}
-
-template <typename T>
-std::set<std::set<T> > graph<T>::SCC() const
-{
-    std::map<T, std::pair<std::pair<size_t, size_t>, bool> > indexes;
-    std::set<std::set<T> > set;
-    std::stack<T> stack;
-    
-    for (typename graph<T>::const_iterator it = this->GetVerticesBegin(), endIt = this->GetVerticesEnd(); it != endIt; ++it)
-    {
-        if (indexes.find(*it) == indexes.end())
-            strong(*it, indexes, stack, set);
-    }
-    
-    return set;
-}
-
-template <typename T>
-graph<std::set<T> > graph<T>::condensation() const
-{
-    std::set<std::set<T> > scc = SCC();
-    
-    std::map<T, size_t> vertexComponentMap;
-    size_t index = 0;
-    for (typename std::set<std::set<T> >::iterator component = scc.begin(); component != scc.end(); ++component)
-    {
-        for (typename std::set<T>::const_iterator vertex = component->begin(); vertex != component->end(); ++vertex)
-        {
-            vertexComponentMap[*vertex] = index;
-        }
-        index++;
-    }
-    
-    graph<std::set<T> > condensed;
-    for (typename std::set<std::set<T> >::const_iterator component = scc.begin(); component != scc.end(); ++component)
-    {
-        condensed.AddVertex(*component);
-        for (typename std::set<T>::const_iterator vertex = component->begin(); vertex != component->end(); ++vertex)
-        {
-            for (typename graph<T>::const_edge_iterator edgeIt = GetVertexNeighboursBegin(*vertex); edgeIt != GetVertexNeighboursEnd(*vertex); ++edgeIt)
-            {
-                if (component->find(edgeIt->Destination) == component->end())
-                {
-                    typename std::set<std::set<T> >::iterator requiredSCC = scc.begin();
-                    std::advance(requiredSCC, vertexComponentMap[edgeIt->Destination]);
-                    condensed.AddVertex(*requiredSCC);
-                    condensed.AddEdge(*component, *requiredSCC, edgeIt->weight);
-                }
-            }
-        }
-    }
-    return condensed;
-}
-
-
-template <typename TNode>
-std::ostream &operator <<(std::ostream &os, const graph<TNode> &g)
-{
-    for (typename graph<TNode>::TAdjacencies::const_iterator pair = g.Adjacencies.begin(); pair != g.Adjacencies.end(); ++pair)
-    {
-        os << pair->first << ":" << std::endl;
-        for (typename graph<TNode>::TAdjValue::const_iterator neighbour = pair->second.begin(); neighbour != pair->second.end(); ++neighbour)
-        {
-            os << neighbour->first << "(" << neighbour->second << ")" << ", ";
-        }
-        os << std::endl;
-    }
-    return os;
-}
-template <typename T>
-float resudialCapacity(const graph<T> &g,
-                       const std::map<std::pair<T, T>, float> &flows,
-                       const std::map<std::pair<T, T>, float> &capacity,
-                       const T &src,
-                       const T &dst)
-{
-    std::pair<T, T> pair = std::make_pair(src, dst);
-    if (g.hasEdge(src, dst) == true)
-        return capacity.find(pair)->second - flows.find(pair)->second;
-    else if(g.hasEdge(dst, src) == true)
-        return -flows.find(pair)->second;
-
-    return 0;
-}
-
-template<typename T>
-bool push(const graph<T> &g, 
-          const T& src,
-          const T& dst,
-          std::map<T, float> &excess, 
-          std::map<std::pair<T, T>, float> &flows,
-          const std::map<std::pair<T, T>, float> &capacity)
-                       
-{
-    float resCapacity = resudialCapacity(g, flows, capacity, src, dst);  
-    float delta = min(excess[src], resCapacity);
-    std::pair<T, T> edge = std::make_pair(src, dst);
-    if (g.hasEdge(src, dst) == true)
-        flows[edge] += delta;
-    else
-        flows[std::make_pair(dst, src)] -= delta;
-
-    excess[src] -= delta;
-    excess[dst] += delta;
-
-    if (excess[src] <= 0)
-    {
-        excess.erase(src);
-        return false;
-    }
-    return true;
-}
-
-template <typename T>
-bool relabel(const graph<T> &g, const T &vertex, std::map<T, size_t> &heights, std::map<std::pair<T, T>, float> &flows, const std::map<std::pair<T, T>, float> &capacity)
-{
-    size_t min_height = -1; 
-    for (typename graph<T>::const_edge_iterator edge = g.begin(vertex); edge != g.end(vertex); ++edge)
-    {
-        float resCapacity = resudialCapacity(g, flows, capacity, vertex, edge->Destination);
-        if (resCapacity <= 0)
-            continue;
-        if (heights[vertex] > heights[edge->Destination])
-            return false;
-        min_height = min(min_height, heights[edge->Destination]);
-    }
-    if (min_height == -1)
-        return false;
-    heights[vertex] = 1 + min_height;
-    return true;
-}
-
-template <typename T>
-float maxFlow(const graph<T> &g, const T &source, const T &target)
-{
-    graph<T> resudial_net = g;
-    std::map<std::pair<T, T>, float> flows, capacity;
-    std::map<T, float> excess;
-    std::map<T, size_t> heights;
-
-    for (typename graph<T>::const_iterator vertex = g.begin(); vertex != g.end(); ++vertex)
-    {
-        heights[*vertex] = 0;
-        for (typename graph<T>::const_edge_iterator edge = g.begin(*vertex); edge != g.end(*vertex); ++edge)
-        {
-            std::pair<T, T> pair = std::make_pair(edge->Source, edge->Destination);
-            flows[pair] = 0;
-            capacity[pair] = edge->weight;
-        }
+    static void solve(std::istream &is,
+                      std::ostream& os) {
+        worker<W> w;
+        w.run(is, os); 
     }
 
-    heights[source] = g.size();
+private:
 
-    for (typename graph<T>::const_edge_iterator edge = g.begin(source); edge != g.end(source); ++edge)
-    {
-        std::pair<T, T> pair = std::make_pair(source, edge->Destination);
-        flows[pair] = edge->weight;
-        excess[pair.second] = edge->weight;
+    typedef int T;
+    typedef std::vector<W> row;
+    typedef std::vector<row> matrix;
+
+    matrix capacity;
+   
+    void run(std::istream &is, 
+             std::ostream &os) {
+        read(is);
+        T src = 0, trg = capacity.size() - 1;
+        os << flow<W>::getMaxFlow(capacity, src, trg) << std::endl;
     }
 
-    float flow = 0;
-    
-    std::map<T, float> snapshot1 = excess;
-    std::map<T, size_t> snapshot2 = heights;
-
-    while (excess.empty() == false)
-    {
-        std::cout << excess.size() << std::endl;
-        T vertex;
-        for (typename std::map<T, float>::const_iterator it = excess.begin(); it != excess.end(); ++it)
-        {
-            float resCapactiySum = 0;
-            for (typename graph<T>::const_edge_iterator edge = g.begin(it->first); edge != g.end(it->first); ++edge)
-            {
-                float resCapacity = resudialCapacity(g, flows, capacity, it->first, edge->Destination);
-                if (resCapacity > 0)
-                {
-                    resCapactiySum += resCapacity;
-                    break;
-                }
-            }
-
-            if (resCapactiySum > 0)
-            {
-                vertex = it->first;
-                break;
-            }
-        }
-
-        for (typename graph<T>::const_edge_iterator edge = g.begin(vertex); edge != g.end(vertex); ++edge)
-        {
-            float resCapacity = resudialCapacity(g, flows, capacity, vertex, edge->Destination);
-            if (resCapacity > 0 && heights[vertex] == heights[edge->Destination] + 1)
-            {
-                if (push(g, vertex, edge->Destination, excess, flows, capacity) == false)
-                   break;
-            }
-        }
-
-        for (typename std::map<T, float>::const_iterator it = excess.begin(); it != excess.end(); ++it)
-        {
-            relabel(g, it->first, heights, flows, capacity);
-        }
-
-        bool one = (snapshot1 == excess);
-        bool two = (snapshot2 == heights);
-
-        if (one && two)
-        {
-            break;
-        }
-        snapshot1 = excess;
-        snapshot2 = heights;
-    }
-
-    for (typename graph<T>::const_iterator vertex = g.begin(); vertex != g.end(); ++vertex)
-    {
-        if (*vertex == target)
-            continue;
-
-        flow += flows[std::make_pair(*vertex, target)]; 
-    }
-    return flow;
-}
-
-template <typename T>
-std::istream &operator>>(std::istream &is, graph<T> &g)
-{
-    size_t edges_qty;
-    is >> edges_qty >> edges_qty;
-    for (size_t index = 0; index < edges_qty; ++index)
-    {
+    void read(std::istream &is) {
+        size_t s;
+        is >> s;
+        size_t edges_qty;
+        is >> edges_qty;
+        capacity = matrix(s, row(s));
         T src, dst; 
-        float weight;
-
-        is >> src >> dst >> weight;
-
-        g.AddVertex(src);
-        g.AddVertex(dst);
-        g.AddEdge(src, dst, weight);
+        W weight;
+        for (size_t index = 0; index < edges_qty; ++index) {
+            is >> src >> dst >> weight;
+            if (src == dst)
+                continue;
+            src--;
+            dst--;
+            capacity[src][dst] += weight;
+        }
     }
+};
 
-    return is;
+template<class W>
+void work() {
+    worker<W>::solve(std::cin,
+                     std::cout);
 }
 
-int main()
-{
-    graph<int> g;
-    std::cin >> g;
-    int src = 1, trg = g.size();
-
-    std::cout << maxFlow(g, src, trg) << std::endl; 
+int main() {
+    work<long long int>();
     return 0;
 }

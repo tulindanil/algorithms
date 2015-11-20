@@ -1,0 +1,1 @@
+python /usr/local/bin/collect.py main.cpp MaxFlow.cpp dummy_graph.h 

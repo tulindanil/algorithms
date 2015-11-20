@@ -131,7 +131,7 @@ void treap<int>::hold() {
         if (first[it->second] == -1)
             first[it->second] = it - order.begin();
 
-        std::cout << it->second << " ";
+        std::cout << it->first << "-"  <<it->second  << " ";
     }
     std::cout << std::endl;
 
@@ -170,9 +170,6 @@ typename treap<T>::node_pair treap<T>::treap_split(node v, const T& key, bool le
 
 template<typename T> 
 typename treap<T>::node treap<T>::treap_merge(node left, node right) {
-
-    check(left);
-    check(right);
 
     if (!left) 
         return right;

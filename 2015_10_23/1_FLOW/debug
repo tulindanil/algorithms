@@ -1,0 +1,1 @@
+g++ main.cpp -o test && cat input.txt | ./run && rm test

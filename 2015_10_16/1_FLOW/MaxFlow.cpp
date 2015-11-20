@@ -1,13 +1,6 @@
 #include <queue>
 #include <cassert>
 
-std::ostream& operator <<(std::ostream& os, const std::vector<int> &v) {
-    for (std::vector<int>::const_iterator it = v.begin(); it != v.end(); ++it)
-        os << *it << " ";
-    os << std::endl;
-    return os;
-}
-
 template<class F>
 class flow {
     

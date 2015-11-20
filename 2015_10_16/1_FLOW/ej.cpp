@@ -6,42 +6,15 @@
 #include <algorithm>
 #include <vector>
 
-template <typename T, typename K>
-std::ostream &operator <<(std::ostream &os, const std::pair<T, K> &p)
-{
-    os << "(" << p.first << ", " << p.second << ")";
-    return os;
-}
-
-template <typename T, typename K>
-std::ostream &operator <<(std::ostream &os, std::map<T, K> &map)
-{
-    for (typename std::map<T, K>::const_iterator it = map.begin(); it != map.end(); ++it)
-    {
-        os << it->first << ", " << it->second << "; "; 
-    }
-    return os;
-}
-
-template <typename T>
-std::ostream &operator <<(std::ostream &os, std::vector<T> &v)
-{
-    for (typename std::vector<T>::const_iterator it = v.begin(); it != v.end(); ++it)
-    {
-        os << *it << " "; 
-    }
-    return os;
-}
-
-#include <queue>
-#include <cassert>
-
 std::ostream& operator <<(std::ostream& os, const std::vector<int> &v) {
     for (std::vector<int>::const_iterator it = v.begin(); it != v.end(); ++it)
         os << *it << " ";
     os << std::endl;
     return os;
 }
+
+#include <queue>
+#include <cassert>
 
 template<class F>
 class flow {
@@ -193,9 +166,11 @@ private:
         W weight;
         for (size_t index = 0; index < edges_qty; ++index) {
             is >> src >> dst >> weight;
+            if (src == dst)
+                continue;
             src--;
             dst--;
-            capacity[src][dst] = weight;
+            capacity[src][dst] += weight;
         }
     }
 };
@@ -206,8 +181,7 @@ void work() {
                      std::cout);
 }
 
-int main()
-{
+int main() {
     work<long long int>();
     return 0;
 }

@@ -1,155 +1,147 @@
-template <typename T>
-float resudialCapacity(const graph<T> &g,
-                       const std::map<std::pair<T, T>, float> &flows,
-                       const std::map<std::pair<T, T>, float> &capacity,
-                       const T &src,
-                       const T &dst)
-{
-    std::pair<T, T> pair = std::make_pair(src, dst);
-    if (g.hasEdge(src, dst) == true)
-        return capacity.find(pair)->second - flows.find(pair)->second;
-    else if(g.hasEdge(dst, src) == true)
-        return -flows.find(pair)->second;
+#include <algorithm>
 
-    return 0;
-}
-
-template<typename T>
-bool push(const graph<T> &g, 
-          const T& src,
-          const T& dst,
-          std::map<T, float> &excess, 
-          std::map<std::pair<T, T>, float> &flows,
-          const std::map<std::pair<T, T>, float> &capacity)
-                       
-{
-    float resCapacity = resudialCapacity(g, flows, capacity, src, dst);  
-    float delta = min(excess[src], resCapacity);
-    std::pair<T, T> edge = std::make_pair(src, dst);
-    if (g.hasEdge(src, dst) == true)
-        flows[edge] += delta;
-    else
-        flows[std::make_pair(dst, src)] -= delta;
-
-    excess[src] -= delta;
-    excess[dst] += delta;
-
-    if (excess[src] <= 0)
-    {
-        excess.erase(src);
-        return false;
+template<class T>
+std::ostream &operator <<(std::ostream &os, const std::vector<T>& v) {
+    for (typename std::vector<T>::const_iterator it = v.begin(); it != v.end(); ++it) {
+        os << *it << " ";
     }
-    return true;
+    return os;
 }
 
-template <typename T>
-bool relabel(const graph<T> &g, const T &vertex, std::map<T, size_t> &heights, std::map<std::pair<T, T>, float> &flows, const std::map<std::pair<T, T>, float> &capacity)
-{
-    size_t min_height = -1; 
-    for (typename graph<T>::const_edge_iterator edge = g.begin(vertex); edge != g.end(vertex); ++edge)
-    {
-        float resCapacity = resudialCapacity(g, flows, capacity, vertex, edge->Destination);
-        if (resCapacity <= 0)
-            continue;
-        if (heights[vertex] > heights[edge->Destination])
-            return false;
-        min_height = min(min_height, heights[edge->Destination]);
+template <typename F>
+class flow {
+public:
+
+    typedef int T;
+
+    typedef std::vector<F> row;
+    typedef std::vector<row> matrix;
+
+    static F getMaxFlow(const matrix& cap, const T &s, const T &t) {
+        flow<F> instance(cap);
+        return instance.maxFlow(s, t);
     }
-    if (min_height == -1)
-        return false;
-    heights[vertex] = 1 + min_height;
-    return true;
-}
 
-template <typename T>
-float maxFlow(const graph<T> &g, const T &source, const T &target)
-{
-    graph<T> resudial_net = g;
-    std::map<std::pair<T, T>, float> flows, capacity;
-    std::map<T, float> excess;
-    std::map<T, size_t> heights;
-
-    for (typename graph<T>::const_iterator vertex = g.begin(); vertex != g.end(); ++vertex)
-    {
-        heights[*vertex] = 0;
-        for (typename graph<T>::const_edge_iterator edge = g.begin(*vertex); edge != g.end(*vertex); ++edge)
-        {
-            std::pair<T, T> pair = std::make_pair(edge->Source, edge->Destination);
-            flows[pair] = 0;
-            capacity[pair] = edge->weight;
+    flow(const matrix& cap): cap(cap), 
+                             flows(matrix(cap.size(), row(cap.size()))),
+                             excess(cap.size()),
+                             heights(cap.size()),
+                             edges(cap.size()) {
+         for (typename matrix::const_iterator row = cap.begin(); row != cap.end(); ++row) {
+            for (typename row::const_iterator v = row->begin(); v != row->end(); ++v) {
+                if (*v > 0) {
+                    edges[row - cap.begin()].push_back(v - row->begin());
+                    edges[v - row->begin()].push_back(row - cap.begin());
+                }
+            }
         }
     }
 
-    heights[source] = g.size();
+private:
 
-    for (typename graph<T>::const_edge_iterator edge = g.begin(source); edge != g.end(source); ++edge)
-    {
-        std::pair<T, T> pair = std::make_pair(source, edge->Destination);
-        flows[pair] = edge->weight;
-        excess[pair.second] = edge->weight;
-//        excess[pair.first] -= edge->weight;
+    matrix flows;
+    matrix cap;
+    matrix edges;
+
+    row excess;
+    row heights;
+
+    inline void prePush(const T& s) {
+        for (typename row::const_iterator v = edges[s].begin(); v != edges[s].end(); ++v) {
+            if (resCap(s, *v) > 0) {
+                flows[s][*v] = cap[s][*v];
+                flows[*v][s] = -cap[s][*v];
+                excess[*v] = cap[s][*v];
+                excess[s] -= cap[s][*v];
+            }
+        }
     }
 
-    float flow = 0;
+    F maxFlow(const T &s, const T &t) {
+        prePush(s); 
+        heights[s] = cap.size();
     
-    std::map<T, float> snapshot1 = excess;
-    std::map<T, size_t> snapshot2 = heights;
+        row esnap = excess; 
+        row hsnap = heights;
 
-    while (excess.empty() == false)
-    {
-        T vertex;
-        for (typename std::map<T, float>::const_iterator it = excess.begin(); it != excess.end(); ++it)
-        {
-            float resCapactiySum = 0;
-            for (typename graph<T>::const_edge_iterator edge = g.begin(it->first); edge != g.end(it->first); ++edge)
-            {
-                float resCapacity = resudialCapacity(g, flows, capacity, it->first, edge->Destination);
-                if (resCapacity > 0)
-                {
-                    resCapactiySum += resCapacity;
-                    break;
+        while(!excess.empty()) {
+            for (typename row::const_iterator overflowed = excess.begin(); overflowed != excess.end(); ++overflowed) {
+                T index = overflowed - excess.begin();
+                if (*overflowed <= 0 || index == s)
+                    continue;
+
+                for (typename row::const_iterator v = edges[index].begin(); v != edges[index].end(); ++v) {
+                    F resCapacity = resCap(index, *v);
+                    if (resCapacity <= 0)
+                        continue;
+                    if (heights[index] == heights[*v] + 1)
+                        push(index, *v); 
+                    if (*overflowed <= 0)
+                        break;
+                }
+           }
+            for (typename row::const_iterator overflowed = excess.begin(); overflowed != excess.end(); ++overflowed) {
+                T index = overflowed - excess.begin();
+                if (index != t && index != s && excess[index] > 0) {
+                    relabel(index);
                 }
             }
 
-            if (resCapactiySum > 0)
-            {
-                vertex = it->first;
+            bool e = (esnap == excess);
+            bool h = (hsnap == heights);
+
+            if (e && h)
                 break;
-            }
-        }
 
-        for (typename graph<T>::const_edge_iterator edge = g.begin(vertex); edge != g.end(vertex); ++edge)
-        {
-            float resCapacity = resudialCapacity(g, flows, capacity, vertex, edge->Destination);
-            if (resCapacity > 0 && heights[vertex] == heights[edge->Destination] + 1)
-            {
-                if (push(g, vertex, edge->Destination, excess, flows, capacity) == false)
-                   break;
-            }
+            esnap = excess;
+            hsnap = heights;
         }
-
-        for (typename std::map<T, float>::const_iterator it = excess.begin(); it != excess.end(); ++it)
-        {
-            relabel(g, it->first, heights, flows, capacity);
+        F value = 0;
+        for (typename matrix::const_iterator row = cap.begin(); row != cap.end(); ++row) {
+            value += flows[row - cap.begin()][t];
         }
-
-        bool one = (snapshot1 == excess);
-        bool two = (snapshot2 == heights);
-
-        if (one && two)
-        {
-            break;
-        }
-        snapshot1 = excess;
-        snapshot2 = heights;
+        return value;
     }
 
-    for (typename graph<T>::const_iterator vertex = g.begin(); vertex != g.end(); ++vertex)
-    {
-        if (*vertex == target)
-            continue;
+    inline bool push(const T &s, const T &t) {
+        if (excess[s] <= 0)
+            return false;
 
-        flow += flows[std::make_pair(*vertex, target)]; 
+
+        F rcap = resCap(s, t);
+        F delta = std::min(rcap, excess[s]);
+
+        flows[s][t] += delta;
+        flows[t][s] -= delta;
+
+        excess[s] -= delta;
+        excess[t] += delta;
+
+        return true;
     }
-    return flow;
-}
+
+    bool relabel(const T &vertex) {
+        F min_height;
+        bool is_init = false;
+        for (typename row::const_iterator v = edges[vertex].begin(); v != edges[vertex].end(); ++v) {
+            F resCapacity = resCap(vertex, *v);
+            if (resCapacity <= 0)
+                continue;
+            if (!is_init) {
+                is_init = true;
+                min_height = heights[*v];
+            }
+            if (heights[vertex] > heights[*v])
+                return false;
+            min_height = std::min(min_height, heights[*v]);
+        }
+        if (!is_init)
+            return false;
+        heights[vertex] = 1 + min_height;
+        return true;
+    }
+
+    inline F resCap(const T &s, const T &t) const {
+        return cap[s][t] - flows[s][t]; 
+    }
+};

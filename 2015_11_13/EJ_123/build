@@ -1,0 +1,1 @@
+python /usr/local/bin/collect.py main.cpp dummy_storage.h dummy_tree.h 

@@ -1,0 +1,1 @@
+python /usr/local/bin/collect.py main.cpp Graph.h Graph.hpp MaxFlow.cpp 

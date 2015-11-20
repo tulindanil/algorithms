@@ -9,28 +9,28 @@
 
 #define min(x, y) (((x) > (y)) ? (y) : (x))
 
-template <typename TNode>
-graph<TNode>::graph()
+template<typename T, typename W, typename Container>
+graph<T, W, Container>::graph()
 {
     
 }
 
-template <typename TNode>
-graph<TNode>::graph(const graph<TNode>& g): Adjacencies(g.Adjacencies)
+template<typename T, typename W, typename Container>
+graph<T, W, Container>::graph(const graph<T, W, Container>& g): Adjacencies(g.Adjacencies)
 {
     
 }
 
-template <typename TNode>
-inline size_t graph<TNode>::size() const
+template<typename T, typename W, typename Container>
+inline size_t graph<T, W, Container>::size() const
 {
     return Adjacencies.size();
 }
 
-template <typename TNode>
-bool graph<TNode>::AddEdge(const TNode &src, const TNode &dst, const float weight)
+template<typename T, typename W, typename Container>
+bool graph<T, W, Container>::AddEdge(const T &src, const T &dst, const float weight)
 {
-    typename std::map<TNode, TAdjValue>::iterator srcIt;
+    typename Container::iterator srcIt;
     if ((srcIt = Adjacencies.find(src)) == Adjacencies.end())
         return false;
     
@@ -38,25 +38,23 @@ bool graph<TNode>::AddEdge(const TNode &src, const TNode &dst, const float weigh
         return false;
     
     srcIt->second.insert(std::make_pair(dst, weight));
-    
     return true;
 }
 
-template <typename TNode>
-bool graph<TNode>::AddVertex(const TNode &node)
+template<typename T, typename W, typename Container>
+bool graph<T, W, Container>::AddVertex(const T &node)
 {
     if(Adjacencies.find(node) != Adjacencies.end())
         return false;
     
-    Adjacencies[node] = TAdjValue();
-    
+    Adjacencies[node] = AdjValue<T, W>();
     return true;
 }
 
-template <typename T>
-bool graph<T>::DeleteVertex(const T &vertex)
+template<typename T, typename W, typename Container>
+bool graph<T, W, Container>::DeleteVertex(const T &vertex)
 {
-    for (typename TAdjacencies::iterator it = Adjacencies.begin(); it != Adjacencies.end(); ++it)
+    for (typename Container::iterator it = Adjacencies.begin(); it != Adjacencies.end(); ++it)
     {
         it->second.erase(vertex);
     }
@@ -65,19 +63,30 @@ bool graph<T>::DeleteVertex(const T &vertex)
     return true;
 }
 
-template <typename TNode>
-graph<TNode> graph<TNode>::transposedGraph() const
+template<typename T, typename W, typename Container>
+bool graph<T, W, Container>::deleteEdge(const T &src, const T &dst)
 {
-    graph<TNode> transposedGraph;
+    if (Adjacencies.find(src) == Adjacencies.end()
+        || Adjacencies.find(src)->second.find(dst) == Adjacencies.find(src)->second.end())
+        return false;
+
+    Adjacencies.find(src)->second.erase(dst);
+    return true;
+}
+
+template<typename T, typename W, typename Container>
+graph<T, W, Container> graph<T, W, Container>::transposedGraph() const
+{
+    graph<T, W, Container> transposedGraph;
     
-    for (typename graph<TNode>::const_iterator vIt = begin(), vItEnd = end(); vIt != vItEnd; ++vIt)
+    for (typename graph<T, W, Container>::const_iterator vIt = begin(), vItEnd = end(); vIt != vItEnd; ++vIt)
     {
         transposedGraph.AddVertex(*vIt);
     }
     
-    for (typename graph<TNode>::const_iterator vIt = begin(), vItEnd = end(); vIt != vItEnd; ++vIt)
+    for (typename graph<T, W, Container>::const_iterator vIt = begin(), vItEnd = end(); vIt != vItEnd; ++vIt)
     {
-        for (typename graph<TNode>::const_edge_iterator edgeIt = begin(*vIt), edgeItEnd = end(*vIt); edgeIt != edgeItEnd; ++edgeIt)
+        for (typename graph<T, W, Container>::const_edge_iterator edgeIt = begin(*vIt), edgeItEnd = end(*vIt); edgeIt != edgeItEnd; ++edgeIt)
         {
             transposedGraph.AddEdge(edgeIt->Destination, edgeIt->Source, edgeIt->weight);
         }
@@ -86,74 +95,84 @@ graph<TNode> graph<TNode>::transposedGraph() const
     return transposedGraph;
 }
 
+template<typename T, typename W, typename Container>
+bool graph<T, W, Container>::hasEdge(const T &src, const T &dst) const
+{
+    if (Adjacencies.find(src) == Adjacencies.end()
+         || Adjacencies.find(src)->second.find(dst) == Adjacencies.find(src)->second.end())
+         return false;
+
+    return true;
+}
+
 #pragma mark - VertexIterator
 
-template <typename TNode>
-graph<TNode>::const_iterator::const_iterator(typename graph<TNode>::TAdjacencies::const_iterator it): InternalIt(it)
+template<typename T, typename W, typename Container>
+graph<T, W, Container>::const_iterator::const_iterator(typename Container::const_iterator it): InternalIt(it)
 {
     
 }
 
-template <typename TNode>
-graph<TNode>::const_iterator::const_iterator(const graph<TNode>::const_iterator &rhs): InternalIt(rhs.InternalIt)
+template<typename T, typename W, typename Container>
+graph<T, W, Container>::const_iterator::const_iterator(const graph<T, W, Container>::const_iterator &rhs): InternalIt(rhs.InternalIt)
 {
     
 }
 
-template<typename TNode>
-typename graph<TNode>::const_iterator &graph<TNode>::const_iterator::operator = (const graph<TNode>::const_iterator& rhs)
+template<typename T, typename W, typename Container>
+typename graph<T, W, Container>::const_iterator &graph<T, W, Container>::const_iterator::operator = (const graph<T, W, Container>::const_iterator& rhs)
 {
     InternalIt = rhs.InternalIt;
     return *this;
 }
 
-template<typename TNode>
-const TNode& graph<TNode>::const_iterator::operator*() const
+template<typename T, typename W, typename Container>
+const T& graph<T, W, Container>::const_iterator::operator*() const
 {
     return InternalIt->first;
 }
 
-template<typename TNode>
-const TNode* graph<TNode>::const_iterator::operator->() const
+template<typename T, typename W, typename Container>
+const T* graph<T, W, Container>::const_iterator::operator->() const
 {
     return &(InternalIt->first);
 }
 
-template<typename TNode>
-bool graph<TNode>::const_iterator::operator==(const graph<TNode>::const_iterator& rhs) const
+template<typename T, typename W, typename Container>
+bool graph<T, W, Container>::const_iterator::operator==(const graph<T, W, Container>::const_iterator& rhs) const
 {
     return InternalIt == rhs.InternalIt;
 }
 
-template<typename TNode>
-bool graph<TNode>::const_iterator::operator!=(const graph<TNode>::const_iterator& rhs) const
+template<typename T, typename W, typename Container>
+bool graph<T, W, Container>::const_iterator::operator!=(const graph<T, W, Container>::const_iterator& rhs) const
 {
     return InternalIt != rhs.InternalIt;
 }
 
-template<typename TNode>
-typename graph<TNode>::const_iterator &graph<TNode>::const_iterator::operator++ ()
+template<typename T, typename W, typename Container>
+typename graph<T, W, Container>::const_iterator &graph<T, W, Container>::const_iterator::operator++ ()
 {
     ++InternalIt;
     return *this;
 }
 
-template<typename TNode>
-typename graph<TNode>::const_iterator graph<TNode>::begin() const
+template<typename T, typename W, typename Container>
+typename graph<T, W, Container>::const_iterator graph<T, W, Container>::begin() const
 {
     return const_iterator(Adjacencies.begin());
 }
 
-template<typename TNode>
-typename graph<TNode>::const_iterator graph<TNode>::end() const
+template<typename T, typename W, typename Container>
+typename graph<T, W, Container>::const_iterator graph<T, W, Container>::end() const
 {
     return const_iterator(Adjacencies.end());
 }
 
 #pragma mark - EdgeIterator
 
-template<typename TNode>
-void graph<TNode>::const_edge_iterator::Initialize()
+template<typename T, typename W, typename Container>
+void graph<T, W, Container>::const_edge_iterator::Initialize()
 {
     if (!isInit)
     {
@@ -163,64 +182,64 @@ void graph<TNode>::const_edge_iterator::Initialize()
     }
 }
 
-template<typename TNode>
-graph<TNode>::const_edge_iterator::const_edge_iterator(const TNode& source, typename graph<TNode>::TAdjValue::const_iterator it): InternalIt(it), isInit(false)
+template<typename T, typename W, typename Container>
+graph<T, W, Container>::const_edge_iterator::const_edge_iterator(const T& source, typename AdjValue<T, W>::const_iterator it): InternalIt(it), isInit(false)
 {
     InternalEdge.Source = source;
 }
 
-template<typename TNode>
-graph<TNode>::const_edge_iterator::const_edge_iterator(const const_edge_iterator &rhs): InternalIt(rhs.InternalIt), InternalEdge(rhs.InternalEdge)
+template<typename T, typename W, typename Container>
+graph<T, W, Container>::const_edge_iterator::const_edge_iterator(const const_edge_iterator &rhs): InternalIt(rhs.InternalIt), InternalEdge(rhs.InternalEdge)
 {
     
 }
 
-template<typename TNode>
-typename graph<TNode>::const_edge_iterator &graph<TNode>::const_edge_iterator::operator=(const graph<TNode>::const_edge_iterator& rhs)
+template<typename T, typename W, typename Container>
+typename graph<T, W, Container>::const_edge_iterator &graph<T, W, Container>::const_edge_iterator::operator=(const graph<T, W, Container>::const_edge_iterator& rhs)
 {
     InternalIt = rhs.InternalIt;
     InternalEdge = rhs.InternalEdge;
     return *this;
 }
 
-template<typename TNode>
-const typename graph<TNode>::edge& graph<TNode>::const_edge_iterator::operator*()
+template<typename T, typename W, typename Container>
+const typename graph<T, W, Container>::edge& graph<T, W, Container>::const_edge_iterator::operator*()
 {
     Initialize();
     return InternalEdge;
 }
 
-template<typename TNode>
-const typename graph<TNode>::edge* graph<TNode>::const_edge_iterator::operator->()
+template<typename T, typename W, typename Container>
+const typename graph<T, W, Container>::edge* graph<T, W, Container>::const_edge_iterator::operator->()
 {
     Initialize();
     return &InternalEdge;
 }
 
-template<typename TNode>
-bool graph<TNode>::const_edge_iterator::operator== (const graph<TNode>::const_edge_iterator& rhs) const
+template<typename T, typename W, typename Container>
+bool graph<T, W, Container>::const_edge_iterator::operator== (const graph<T, W, Container>::const_edge_iterator& rhs) const
 {
     return InternalIt == rhs.InternalIt;
 }
 
-template<typename TNode>
-bool graph<TNode>::const_edge_iterator::operator!= (const graph<TNode>::const_edge_iterator& rhs) const
+template<typename T, typename W, typename Container>
+bool graph<T, W, Container>::const_edge_iterator::operator!= (const graph<T, W, Container>::const_edge_iterator& rhs) const
 {
     return InternalIt != rhs.InternalIt;
 }
 
-template<typename TNode>
-typename graph<TNode>::const_edge_iterator &graph<TNode>::const_edge_iterator::operator++ ()
+template<typename T, typename W, typename Container>
+typename graph<T, W, Container>::const_edge_iterator &graph<T, W, Container>::const_edge_iterator::operator++ ()
 {
     ++InternalIt;
     isInit = false;
     return *this;
 }
 
-template<typename TNode>
-typename graph<TNode>::const_edge_iterator graph<TNode>::begin(const TNode& v) const
+template<typename T, typename W, typename Container>
+typename graph<T, W, Container>::const_edge_iterator graph<T, W, Container>::begin(const T& v) const
 {
-    typename TAdjacencies::const_iterator it = Adjacencies.find(v);
+    typename Container::const_iterator it = Adjacencies.find(v);
     if (it != Adjacencies.end())
     {
         return const_edge_iterator(v, it->second.begin());
@@ -229,10 +248,10 @@ typename graph<TNode>::const_edge_iterator graph<TNode>::begin(const TNode& v) c
 //    throw std::runtime_error("bad vertex");
 }
 
-template<typename TNode>
-typename graph<TNode>::const_edge_iterator graph<TNode>::end(const TNode& v) const
+template<typename T, typename W, typename Container>
+typename graph<T, W, Container>::const_edge_iterator graph<T, W, Container>::end(const T& v) const
 {
-    typename TAdjacencies::const_iterator it = Adjacencies.find(v);
+    typename Container::const_iterator it = Adjacencies.find(v);
     if (it != Adjacencies.end())
     {
         return const_edge_iterator(v, it->second.end());
@@ -243,18 +262,18 @@ typename graph<TNode>::const_edge_iterator graph<TNode>::end(const TNode& v) con
 
 #pragma mark - BFS
 
-template<typename TNode>
-std::map<TNode, TNode> graph<TNode>::BFS(const TNode &v0) const
+template<typename T, typename W, typename Container>
+std::map<T, T> graph<T, W, Container>::BFS(const T &v0) const
 {
-    std::map<TNode, TNode> backEdges;
-    std::queue<TNode> queue;
+    std::map<T, T> backEdges;
+    std::queue<T> queue;
     queue.push(v0);
     backEdges[v0] = v0;
     while (!queue.empty())
     {
-        TNode v = queue.front();
+        T v = queue.front();
         queue.pop();
-        for (typename graph<TNode>::const_edge_iterator eIt = begin(v), eEnd = end(v); eIt != eEnd; ++eIt)
+        for (typename graph<T, W, Container>::const_edge_iterator eIt = begin(v), eEnd = end(v); eIt != eEnd; ++eIt)
         {
             if (backEdges.find(eIt->Destination) == backEdges.end())
             {
@@ -268,13 +287,13 @@ std::map<TNode, TNode> graph<TNode>::BFS(const TNode &v0) const
 
 #pragma mark - DFS
 
-template <typename TNode>
-void graph<TNode>::DFSVisit(const TNode &vertex, size_t &time, std::map<TNode, std::pair<size_t, size_t> > &schedule) const
+template<typename T, typename W, typename Container>
+void graph<T, W, Container>::DFSVisit(const T &vertex, size_t &time, std::map<T, std::pair<size_t, size_t> > &schedule) const
 {
     schedule[vertex] = std::make_pair(time, 0);
     time++;
     
-    for (typename graph<TNode>::const_edge_iterator eIt = begin(vertex), eEnd = end(vertex); eIt != eEnd; ++eIt)
+    for (typename graph<T, W, Container>::const_edge_iterator eIt = begin(vertex), eEnd = end(vertex); eIt != eEnd; ++eIt)
     {
         if (!schedule.count(eIt->Destination) && schedule[eIt->Destination].second == 0)
         {
@@ -286,13 +305,13 @@ void graph<TNode>::DFSVisit(const TNode &vertex, size_t &time, std::map<TNode, s
     time++;
 }
 
-template <typename TNode>
-std::map<TNode, std::pair<size_t, size_t> > graph<TNode>::DFS() const
+template<typename T, typename W, typename Container>
+std::map<T, std::pair<size_t, size_t> > graph<T, W, Container>::DFS() const
 {
-    std::map<TNode, std::pair<size_t, size_t> > output;
+    std::map<T, std::pair<size_t, size_t> > output;
     size_t time = 1;
     
-    for (typename graph<TNode>::const_iterator eIt = begin(), eEnd = end(); eIt != eEnd; ++eIt)
+    for (typename graph<T, W, Container>::const_iterator eIt = begin(), eEnd = end(); eIt != eEnd; ++eIt)
     {
         if (!output.count(*eIt))
         {
@@ -308,8 +327,8 @@ std::map<TNode, std::pair<size_t, size_t> > graph<TNode>::DFS() const
 #pragma mark - Shortest Path
 
 size_t f(size_t fst, size_t snd);
-template <typename T>
-std::pair<std::vector<T>, float> graph<T>::shortestPath(const T &source, const T &destination) const
+template<typename T, typename W, typename Container>
+std::pair<std::vector<T>, float> graph<T, W, Container>::shortestPath(const T &source, const T &destination) const
 {
     std::map<T, float> g_score;
     std::map<T, float> f_score;
@@ -320,7 +339,7 @@ std::pair<std::vector<T>, float> graph<T>::shortestPath(const T &source, const T
     g_score[source] = 0;
     f_score[source] = 0 + f(source, destination);
     
-//    for (typename graph<T>::const_iterator vertex = this->begin(); vertex != this->end(); ++vertex)
+//    for (typename graph<T, W, Container>::const_iterator vertex = this->begin(); vertex != this->end(); ++vertex)
 //    {
 //        if (source != *vertex)
 //        {
@@ -343,7 +362,7 @@ std::pair<std::vector<T>, float> graph<T>::shortestPath(const T &source, const T
         queue.erase(queue.begin());
         closed_set.insert(current);
         
-        for (typename graph<T>::const_edge_iterator edge = this->begin(current); edge != this->end(current); ++edge)
+        for (typename graph<T, W, Container>::const_edge_iterator edge = this->begin(current); edge != this->end(current); ++edge)
         {
             if (closed_set.find(edge->Destination) != closed_set.end())
                 continue;
@@ -373,8 +392,8 @@ std::pair<std::vector<T>, float> graph<T>::shortestPath(const T &source, const T
 
 #pragma mark - Dijkstra
 
-template <typename T>
-std::pair<std::map<T, float>, std::map<T, T> > graph<T>::dijkstra(const T &sourceVertex) const
+template<typename T, typename W, typename Container>
+std::pair<std::map<T, float>, std::map<T, T> > graph<T, W, Container>::dijkstra(const T &sourceVertex) const
 {
     std::map<T, float> destinations;
     std::map<T, T> paths;
@@ -382,7 +401,7 @@ std::pair<std::map<T, float>, std::map<T, T> > graph<T>::dijkstra(const T &sourc
     destinations[sourceVertex] = 0;
     std::set<std::pair<float, T> > queue;
     
-    for (typename graph<T>::const_iterator vertex = this->begin(); vertex != this->end(); ++vertex)
+    for (typename graph<T, W, Container>::const_iterator vertex = this->begin(); vertex != this->end(); ++vertex)
     {
         if (sourceVertex != *vertex)
             destinations[*vertex] = FLT_MAX / 2;
@@ -395,7 +414,7 @@ std::pair<std::map<T, float>, std::map<T, T> > graph<T>::dijkstra(const T &sourc
         std::pair<float, T> pair = *queue.begin();
         queue.erase(queue.begin());
         
-        for (typename graph<T>::const_edge_iterator edge = this->begin(pair.second); edge != this->end(pair.second); ++edge)
+        for (typename graph<T, W, Container>::const_edge_iterator edge = this->begin(pair.second); edge != this->end(pair.second); ++edge)
         {
             float alternativeWeight = pair.first + edge->weight;
             if (alternativeWeight < destinations[edge->Destination])
@@ -417,13 +436,13 @@ std::pair<std::map<T, float>, std::map<T, T> > graph<T>::dijkstra(const T &sourc
 
 #pragma mark - SCC
 
-template <typename T>
-void graph<T>::strong(const T &vertex, std::map<T, std::pair<std::pair<size_t, size_t>, bool> > &indexes, std::stack<T> &stack, std::set<std::set<T> > &stronglyConnected) const
+template<typename T, typename W, typename Container>
+void graph<T, W, Container>::strong(const T &vertex, std::map<T, std::pair<std::pair<size_t, size_t>, bool> > &indexes, std::stack<T> &stack, std::set<std::set<T> > &stronglyConnected) const
 {
     indexes[vertex] = std::make_pair(std::make_pair(indexes.size(), indexes.size()), true);
     stack.push(vertex);
     
-    for (typename graph<T>::const_edge_iterator edge = this->begin(vertex); edge != this->end(vertex); ++edge)
+    for (typename graph<T, W, Container>::const_edge_iterator edge = this->begin(vertex); edge != this->end(vertex); ++edge)
     {
         if (indexes.find(edge->Destination) == indexes.end())
         {
@@ -452,14 +471,14 @@ void graph<T>::strong(const T &vertex, std::map<T, std::pair<std::pair<size_t, s
     }
 }
 
-template <typename T>
-std::set<std::set<T> > graph<T>::SCC() const
+template<typename T, typename W, typename Container>
+std::set<std::set<T> > graph<T, W, Container>::SCC() const
 {
     std::map<T, std::pair<std::pair<size_t, size_t>, bool> > indexes;
     std::set<std::set<T> > set;
     std::stack<T> stack;
     
-    for (typename graph<T>::const_iterator it = this->begin(), endIt = this->end(); it != endIt; ++it)
+    for (typename graph<T, W, Container>::const_iterator it = this->GetVerticesBegin(), endIt = this->GetVerticesEnd(); it != endIt; ++it)
     {
         if (indexes.find(*it) == indexes.end())
             strong(*it, indexes, stack, set);
@@ -468,18 +487,20 @@ std::set<std::set<T> > graph<T>::SCC() const
     return set;
 }
 
-template <typename T>
-graph<std::set<T> > graph<T>::condensation() const
+template<typename T, typename W, typename Container>
+graph<std::set<T> > graph<T, W, Container>::condensation() const
 {
     std::set<std::set<T> > scc = SCC();
     
-    std::map<T, std::set<T> > vertexComponentMap;
+    std::map<T, size_t> vertexComponentMap;
+    size_t index = 0;
     for (typename std::set<std::set<T> >::iterator component = scc.begin(); component != scc.end(); ++component)
     {
         for (typename std::set<T>::const_iterator vertex = component->begin(); vertex != component->end(); ++vertex)
         {
-            vertexComponentMap[*vertex] = *component;
+            vertexComponentMap[*vertex] = index;
         }
+        index++;
     }
     
     graph<std::set<T> > condensed;
@@ -488,12 +509,14 @@ graph<std::set<T> > graph<T>::condensation() const
         condensed.AddVertex(*component);
         for (typename std::set<T>::const_iterator vertex = component->begin(); vertex != component->end(); ++vertex)
         {
-            for (typename graph<T>::const_edge_iterator edgeIt = begin(*vertex); edgeIt != end(*vertex); ++edgeIt)
+            for (typename graph<T, W, Container>::const_edge_iterator edgeIt = GetVertexNeighboursBegin(*vertex); edgeIt != GetVertexNeighboursEnd(*vertex); ++edgeIt)
             {
                 if (component->find(edgeIt->Destination) == component->end())
                 {
-                    condensed.AddVertex(vertexComponentMap[edgeIt->Destination]);
-                    condensed.AddEdge(*component, vertexComponentMap[edgeIt->Destination], edgeIt->weight);
+                    typename std::set<std::set<T> >::iterator requiredSCC = scc.begin();
+                    std::advance(requiredSCC, vertexComponentMap[edgeIt->Destination]);
+                    condensed.AddVertex(*requiredSCC);
+                    condensed.AddEdge(*component, *requiredSCC, edgeIt->weight);
                 }
             }
         }
@@ -503,13 +526,13 @@ graph<std::set<T> > graph<T>::condensation() const
 
 #pragma mark - operator <<
 
-template <typename TNode>
-std::ostream &operator <<(std::ostream &os, const graph<TNode> &g)
+template<typename T, typename W, typename Container>
+std::ostream &operator <<(std::ostream &os, const graph<T, W, Container> &g)
 {
-    for (typename graph<TNode>::TAdjacencies::const_iterator pair = g.Adjacencies.begin(); pair != g.Adjacencies.end(); ++pair)
+    for (typename Container::const_iterator pair = g.Adjacencies.begin(); pair != g.Adjacencies.end(); ++pair)
     {
         os << pair->first << ":" << std::endl;
-        for (typename graph<TNode>::TAdjValue::const_iterator neighbour = pair->second.begin(); neighbour != pair->second.end(); ++neighbour)
+        for (typename AdjValue<T, W>::const_iterator neighbour = pair->second.begin(); neighbour != pair->second.end(); ++neighbour)
         {
             os << neighbour->first << "(" << neighbour->second << ")" << ", ";
         }
