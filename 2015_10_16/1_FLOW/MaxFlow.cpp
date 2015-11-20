@@ -34,8 +34,8 @@ private:
         for (typename matrix::const_iterator row = capacity.begin(); row != capacity.end(); ++row) {
             for (typename row::const_iterator v = row->begin(); v != row->end(); ++ v) {
                 if (*v > 0) {
-                    edges[row - capacity.begin()].push_back(v - row->begin());
-                    edges[v - row->begin()].push_back(row - capacity.begin());
+                    edges.at(row - capacity.begin()).push_back(v - row->begin());
+                    edges.at(v - row->begin()).push_back(row - capacity.begin());
                 }
             }
         }
@@ -55,7 +55,7 @@ private:
         for (typename matrix::const_iterator v = capacity.begin(); v != capacity.end(); ++v) {
             if (v - capacity.begin() == t)
                 continue;
-            maxFlow += flows[v - capacity.begin()][t]; 
+            maxFlow += flows.at(v - capacity.begin()).at(t); 
         }
         return maxFlow;
     }
@@ -70,8 +70,8 @@ private:
     
     void pushFlowThrowPath(const path& p, const F& pFlow) {
         for (typename path::const_iterator v = p.begin(); v != p.end() - 1; ++v) {
-            flows[*v][*(v + 1)] += pFlow;
-            flows[*(v + 1)][*v] -= pFlow;
+            flows.at(*v).at(*(v + 1)) += pFlow;
+            flows.at(*(v + 1)).at(*v) -= pFlow;
         }
     }
     
@@ -83,7 +83,7 @@ private:
         while (!queue.empty()) {
             T v = queue.front();
             queue.pop();
-            for (typename row::const_iterator n = edges[v].begin(); n != edges[v].end(); ++n) {
+            for (typename row::const_iterator n = edges.at(v).begin(); n != edges.at(v).end(); ++n) {
                 if (resCap(v, *n) > 0 &&
                     destinyMap.count(*n) == 0) {
                     destinyMap[*n] = v;
@@ -110,7 +110,7 @@ private:
     }
     
     inline F resCap(const T& s, const T& t) const {
-        return capacity[s][t] - flows[s][t];
+        return capacity.at(s).at(t) - flows.at(s).at(t);
     }
     
 };
