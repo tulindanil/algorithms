@@ -105,6 +105,10 @@ void work() {
 }
 
 int main() {
+    try {
     work<int>();
+    } catch (const std::exception& e) {
+        std::cout << "nana" << std::endl;
+    }
     return 0;
 }
