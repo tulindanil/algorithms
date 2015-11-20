@@ -205,13 +205,13 @@ private:
             std::string s;
             is >> s;
             for (std::string::const_iterator it = s.begin(); it != s.end(); ++it) {
-                deck[row][it - s.begin()] = (*it == '#') ? true : false;
+                deck.at(row).at(it - s.begin()) = (*it == '#') ? true : false;
             }
         }
 
         for (size_t row = 0; row < size; ++row) {
             for (size_t column = 0; column < size; ++column) {
-                if (deck[row][column] == true)
+                if (deck.at(row).at(column) == true)
                     continue;
 
                 std::pair<T, T> cell = std::make_pair(row, column);
@@ -220,12 +220,12 @@ private:
                 bool isBlack = !isWhite;
 
                 if (isWhite == true) {
-                    capacity[src][getIndex(cell)] = 1;
+                    capacity.at(src).at(getIndex(cell)) = 1;
                     for (size_t i = 0; i < 4; ++i)
                         shift(moves[i], cell);
                 }
                 else 
-                    capacity[getIndex(cell)][dst] = 1;
+                    capacity.at(getIndex(cell)).at(dst) = 1;
             }
         }
 
@@ -233,14 +233,14 @@ private:
 
     inline void shift(const movement &move,
                const std::pair<T, T> &currentCell) {
-        T index = getIndex(currentCell) + 3*move.dx + move.dy;
+        T index = getIndex(currentCell) + size*move.dx + move.dy;
         
         T row = currentCell.first + move.dx;
         T column = currentCell.second + move.dy;
 
         if ((row < 0 || row == size) || (column < 0 || column == size) || deck.at(row).at(column) == true)
             return;
-        capacity[getIndex(currentCell)][index] = 1;
+        capacity.at(getIndex(currentCell)).at(index) = 1;
     }
 };
 
