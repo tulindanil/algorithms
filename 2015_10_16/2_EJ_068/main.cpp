@@ -87,7 +87,7 @@ private:
 
     inline void shift(const movement &move,
                const std::pair<T, T> &currentCell) {
-        T index = getIndex(currentCell) + 3*move.dx + move.dy;
+        T index = getIndex(currentCell) + size*move.dx + move.dy;
         
         T row = currentCell.first + move.dx;
         T column = currentCell.second + move.dy;
