@@ -59,7 +59,6 @@ struct tree {
         for (ordered::const_iterator it = o.begin(); it != o.end(); ++it) 
             if (f[it->second] == -1)
                 f[it->second] = it - o.begin();
-        storage<rmq_type>::fill(o.size());
         s = storage<rmq_type>(o);
     }
 
