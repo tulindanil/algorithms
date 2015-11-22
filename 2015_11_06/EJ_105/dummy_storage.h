@@ -36,6 +36,7 @@ public:
     }
 
     storage(const std::vector<T> &v): m(matrix(_log(v.size()) + 1, row(v.size(), T()))) {
+        fill(v.size());
         m.at(0) = v;
         for (size_t k = 1; k <= _log(v.size()); ++k) {
             for (int i = 0; i <= (int)v.size() - pow(k); ++i) {

@@ -1,5 +1,7 @@
 #include <iostream>
-#include "storage.h"
+#include "dummy_storage.h"
+
+using dummy::storage;
 
 int main() {
 
@@ -16,7 +18,6 @@ int main() {
         v.at(i) = value;
     }
 
-    storage<float>::fill(size);
     storage<float> s = storage<float>(v);
 
     std::cin >> size;
