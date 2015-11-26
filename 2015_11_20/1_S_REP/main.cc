@@ -4,33 +4,12 @@
 #include <vector>
 #include <streambuf>
 #include <map>
+#include <memory>
 
-
-struct vertex {
-
-    typedef std::map<char, int> map;
-
-    map neighbors;
-    map move;
-    int pttrn_number;
-    int suff_link;
-    int par;
-    int suff_flink;
-    bool ispttrn;
-    char symbol;
-
-    vertex(int p, char c): par(p), symbol(c), suff_link(-1), suff_flink(-1), ispttrn(false) { 
-
-    }
-
-};
 
 class finder {
 
     public:
-
-        std::vector<vertex> vertices;
-        std::vector<std::string> pttrns;
 
         finder() {
             vertices.push_back(vertex(0,'$'));
@@ -51,7 +30,7 @@ class finder {
             vertices[num].pttrn_number = pttrns.size() - 1;
         }
 
-       void check(int v, int i) {
+        void check(int v, int i) {
             for (int u = v; u != 0; u = getFastLink(u)) {
                 if (vertices[u].ispttrn) 
                     std::cout << i - pttrns[vertices[u].pttrn_number].length() << std::endl;
@@ -102,6 +81,33 @@ class finder {
             }
             return vertices[v].suff_flink;
         }
+
+    private:
+
+        struct vertex;
+
+        std::vector<vertex> vertices;
+        std::vector<std::string> pttrns;
+
+        struct vertex {
+
+            typedef std::map<char, int> map;
+            typedef std::shared_ptr<vertex> reference;
+
+            map neighbors;
+            map move;
+            int pttrn_number;
+            int suff_link;
+            int par;
+            int suff_flink;
+            bool ispttrn;
+            char symbol;
+
+            vertex(int p, char c): par(p), symbol(c), suff_link(-1), suff_flink(-1), ispttrn(false) { 
+
+            }
+
+        };
 };
 
 int main() {
@@ -119,8 +125,8 @@ int main() {
     std::string str;
     std::string file_contents;
     while (std::getline(file, str)) {
-          file_contents += str;
-          file_contents.push_back('\n');
+        file_contents += str;
+        file_contents.push_back('\n');
     }
     f.findAll(file_contents);   
 }
