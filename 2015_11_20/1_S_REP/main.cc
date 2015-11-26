@@ -12,7 +12,7 @@ class finder {
     public:
 
         finder(): root(0) {
-            vertices.push_back(vertex(0,'#'));
+            vertices.push_back(vertex(root,'#'));
         }
 
         void addPattern(const std::string& s) {
@@ -57,26 +57,26 @@ class finder {
             map neighbors;
             map move;
             int pttrn_number;
-            int suff_link;
-            int par;
+            int link;
+            int parent;
             bool ispttrn;
             char symbol;
 
-            vertex(int p, char c): par(p), symbol(c), suff_link(-1), ispttrn(false) { 
+            vertex(int p, char c): parent(p), symbol(c), link(-1), ispttrn(false) { 
 
             }
 
         };
 
         int getSuffixLink(int v) {
-            if (vertices[v].suff_link == -1) {
-                if (v == root || vertices[v].par == root) {
-                    vertices[v].suff_link = root;
+            if (vertices[v].link == -1) {
+                if (v == root || vertices[v].parent == root) {
+                    vertices[v].link = root;
                 } else {
-                    vertices[v].suff_link = getMove(getSuffixLink(vertices[v].par), vertices[v].symbol);
+                    vertices[v].link = getMove(getSuffixLink(vertices[v].parent), vertices[v].symbol);
                 }
             }
-            return vertices[v].suff_link;
+            return vertices[v].link;
         }
 
         int getMove(int v, char ch) {
