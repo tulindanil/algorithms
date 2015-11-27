@@ -43,7 +43,7 @@ class finder {
                 num = vertices[num].neighbors[ch];
             }
             vertices[num].ispttrn = true;
-            pttrns.push_back(s);
+            pttrns.push_back(s.length());
             vertices[num].pttrn_number = pttrns.size() - 1;
         }
 
@@ -52,14 +52,15 @@ class finder {
             for (int i = 0; i < s.length(); i++) {
                 current = getMove(current, s[i]);
                 for (int k = current; k != 0; k = getSuffixLink(k)) {
-                    if (vertices[k].ispttrn) 
-                        std::cout << i - pttrns[vertices[k].pttrn_number].length() - 1 << std::endl;
+                    if (vertices[k].ispttrn) { 
+                        std::cout << i - pttrns[vertices[k].pttrn_number] + 1 << std::endl;
+                    }
                 }
             }
         }
 
         friend std::ostream& operator <<(std::ostream& os, const finder& f) {
-            os << f.vertices;
+            os << f.vertices.size();
             return os;
         }
 
@@ -69,7 +70,7 @@ class finder {
         int root;
 
         std::vector<vertex> vertices;
-        std::vector<std::string> pttrns;
+        std::vector<size_t> pttrns;
 
         struct vertex {
 
@@ -124,12 +125,13 @@ class finder {
 int main() {
     finder f;
     std::string filepath;
-    std::cin >> filepath;
+    std::getline(std::cin, filepath);
     size_t q = 0;
     std::cin >> q;
+    std::string s;
+    std::getline(std::cin, s);
     for (int i = 0; i < q; i++) {
-        std::string s;
-        std::cin >> s;
+        std::getline(std::cin, s);
         f.addPattern(s);
     }
     std::ifstream file(filepath);
