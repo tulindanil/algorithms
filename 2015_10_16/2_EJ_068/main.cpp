@@ -8,8 +8,7 @@
 
 #include "MaxFlow.cpp"
 
-struct movement
-{
+struct movement {
     int dx, dy;
     movement(int dx, int dy): dx(dx), dy(dy) { }
 };
