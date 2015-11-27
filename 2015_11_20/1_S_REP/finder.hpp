@@ -1,3 +1,4 @@
+#include <set>
 class finder {
 
     public:
@@ -21,16 +22,18 @@ class finder {
             vertices[num].pttrn_number = pttrns.size() - 1;
         }
 
-        void findAll(const std::string& s) {
+        std::set<int> findAll(const std::string& s) {
+            std::set<int> set;
             int current = 0;
             for (int i = 0; i < s.length(); i++) {
                 current = getMove(current, s[i]);
                 for (int k = current; k != 0; k = getSuffixLink(k)) {
                     if (vertices[k].ispttrn) { 
-                        std::cout << i - pttrns[vertices[k].pttrn_number] + 1 << std::endl;
+                        set.insert(i - pttrns[vertices[k].pttrn_number] + 1);
                     }
                 }
             }
+            return set;
         }
 
         friend std::ostream& operator <<(std::ostream& os, const finder& f) {

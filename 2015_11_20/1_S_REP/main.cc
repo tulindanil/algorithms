@@ -45,5 +45,8 @@ int main() {
         file_contents += str;
         file_contents.push_back('\n');
     }
-    f.findAll(file_contents);   
+    auto set = f.findAll(file_contents);   
+    for (auto it: set) {
+        std::cout << it << std::endl;
+    }
 }
