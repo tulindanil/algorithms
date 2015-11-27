@@ -6,6 +6,23 @@
 #include <map>
 #include <memory>
 
+template<class T, class K>
+std::ostream& operator <<(std::ostream& os, const std::map<T, K>& m) {
+    os << "map:" << std::endl;
+    for (auto it: m) {
+        os << it.first << "-" << it.second << std::endl;
+    }
+    return os;
+}
+
+template<class T>
+std::ostream& operator <<(std::ostream& os, const std::vector<T>& v) {
+    os << "vector:" << std::endl;
+    for (auto it = v.begin(); it != v.end(); ++it) {
+        os << it - v.begin() << "-" << *it << " ";
+    }
+    return os;
+}
 
 class finder {
 
@@ -41,6 +58,11 @@ class finder {
             }
         }
 
+        friend std::ostream& operator <<(std::ostream& os, const finder& f) {
+            os << f.vertices;
+            return os;
+        }
+
     private:
 
         struct vertex;
@@ -66,6 +88,11 @@ class finder {
 
             }
 
+            friend std::ostream& operator <<(std::ostream& os, const vertex& v) {
+                os << "vertex" << std::endl;
+                os << v.neighbors << std::endl << v.move;
+                return os;
+            }
         };
 
         int getSuffixLink(int v) {
@@ -90,8 +117,7 @@ class finder {
                         vertices[v].move[ch] = getMove(getSuffixLink(v), ch);
                 }
             }
-            return
-                vertices[v].move[ch];
+            return vertices[v].move[ch];
         }
 };
 
