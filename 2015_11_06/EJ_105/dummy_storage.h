@@ -9,11 +9,11 @@ using std::pow;
 char *logs;
 long long int *bins;
 
-int _log(int x) {
+inline int _log(int x) {
     return logs[x] + 1;
 }
 
-int powered(int x) {
+inline int powered(int x) {
     size_t value = 1;
     while (x > 0) {
         value <<= 1;
@@ -23,7 +23,9 @@ int powered(int x) {
 }
 
 int pow(int x) {
-    return bins[x];
+//    assert(bins[x] == powered(x));
+    return powered(x);
+    //return bins[x];
 }
 
 template<class T>
@@ -36,21 +38,20 @@ public:
     }
 
     storage(const std::vector<T> &v): m(matrix(_log(v.size()) + 1, row(v.size(), T()))) {
-        fill(v.size());
         m.at(0) = v;
         for (size_t k = 1; k <= _log(v.size()); ++k) {
             for (int i = 0; i <= (int)v.size() - pow(k); ++i) {
-                try {
-                    m.at(k).at(i) = std::min(m.at(k - 1).at(i), m.at(k - 1).at(i + pow(k - 1)));
-                } catch (std::exception &) {
+//                try {
+                m.at(k).at(i) = std::min(m.at(k - 1).at(i), m.at(k - 1).at(i + pow(k - 1)));
+/*                } catch (std::exception &) {
                     std::cout << v.size() - pow(2, k) << " " << v.size() - dummy::pow(k)  << std::endl;
                     abort();
                 }
-            }
+*/            }
         }
     }
 
-    T rmq(size_t begin, size_t end) const {
+    inline T rmq(size_t begin, size_t end) const {
         size_t length = end - begin;
         int k = _log(length) - 1;
         return std::min(m.at(k).at(begin), m.at(k).at(end - dummy::pow(k)));
@@ -76,10 +77,10 @@ public:
         }
         logs[size] = logs[size - 1];
 
-        bins = new long long int[size];
-        for (size_t i = 0; i < size; ++i) {
-            bins[i] = pow(2, i);
-        }
+ //       bins = new long long int[size];
+ //       for (size_t i = 0; i < size; ++i) {
+ //           bins[i] = pow(2, i);
+ //       }
     }
 
 private:
