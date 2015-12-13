@@ -18,10 +18,10 @@ public:
         parent = newParent;
     }
 
-    long long substringsCount(int length) {
+    long long count(int length) {
         long long count = std::min(length, right) - left;
         for (auto node: to)
-            count += node.second->substringsCount(length);
+            count += node.second->count(length);
         return count;
     }
 

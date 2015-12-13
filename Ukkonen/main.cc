@@ -7,15 +7,10 @@
 int main() {
     int k;
     std::string word;
-    std::cin >> k >> word;
+    std::cin >> word;
     int length = word.length();
-    for (int start = 0; start < length; ++start) {
-        SuffixTree tree;
-        for (int i = 0; i < k; ++i)
-            tree.appendChar(word[(start + i) % length]);
-        if (start)
-            std::cout << ' ';
-        std::cout << tree.substringsCount();
-    }
-    std::cout << '\n';
+    SuffixTree tree;
+    for (auto it: word) 
+        tree.push_back(it);
+    std::cout << tree.count() << std::endl;
 }
