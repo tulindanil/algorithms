@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <set>
+#include <queue>
 
 #define sz(v) ((int)((v).size()))
 #define forn(i,n) for (int i = 0; i < (n); i++)
@@ -119,11 +120,27 @@ void test_lca() {
     assert_equals(t.lca(1, 3), 3);
 }
 
+void test_priority_features() {
+    treap<int> t;
+    const int n = 5000;
+
+    std::priority_queue<int> queue;
+    forn(i, n) queue.push(i);
+    forn(i, n) t.push(i, n - i);
+
+    forn(i, n) {
+        assert_equals(t.top(), queue.top());
+        t.pop();
+        queue.pop();
+    }
+}
+
 int main()
 {
     t(test_simple_insert_count_erase);
     t(test_random_insert_erase);
     t(test_lca);
+    t(test_priority_features);
 //    t(test_performance);
     return 0;
 }
