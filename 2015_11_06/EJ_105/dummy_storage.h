@@ -58,7 +58,7 @@ public:
 
     inline const T& at(size_t row, size_t column) const {
         if (row == 0) {
-            assert(data != nullptr);
+            assert(data != NULL);
             return data->at(column);
         }
         return m.at(row).at(column);
