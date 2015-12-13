@@ -10,7 +10,7 @@ char *logs;
 long long int *bins;
 
 inline int _log(int x) {
-    return logs[x] + 1;
+   return logs[x] + 1;
 }
 
 inline int powered(int x) {
@@ -37,14 +37,17 @@ public:
 
     }
 
-    storage(const std::vector<T> &v): m(matrix(_log(v.size()) + 1, row(v.size(), T()))) {
+    storage(std::vector<T> &v): m(matrix(_log(v.size()) + 1)) {
         m.at(0) = v;
-        for (size_t k = 1; k <= _log(v.size()); ++k) {
-            for (int i = 0; i <= (int)v.size() - pow(k); ++i) {
+        size_t size = v.size();
+        v.clear();
+        for (size_t k = 1; k <= _log(size); ++k) {
+            m.at(k) = row((int)size - pow(k) + pow(k - 1) + 1);
+            for (int i = 0; i <= (int)size - pow(k); ++i) {
 //                try {
                 m.at(k).at(i) = std::min(m.at(k - 1).at(i), m.at(k - 1).at(i + pow(k - 1)));
 /*                } catch (std::exception &) {
-                    std::cout << v.size() - pow(2, k) << " " << v.size() - dummy::pow(k)  << std::endl;
+                    std::cout << size - pow(2, k) << " " << size - dummy::pow(k)  << std::endl;
                     abort();
                 }
 */            }
