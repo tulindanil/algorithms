@@ -1,28 +1,5 @@
 #include <iostream>
-#include <cstring>
 #include <fstream>
-#include <vector>
-#include <streambuf>
-#include <map>
-#include <memory>
-
-template<class T, class K>
-std::ostream& operator <<(std::ostream& os, const std::map<T, K>& m) {
-    os << "map:" << std::endl;
-    for (auto it: m) {
-        os << it.first << "-" << it.second << std::endl;
-    }
-    return os;
-}
-
-template<class T>
-std::ostream& operator <<(std::ostream& os, const std::vector<T>& v) {
-    os << "vector:" << std::endl;
-    for (auto it = v.begin(); it != v.end(); ++it) {
-        os << it - v.begin() << "-" << *it << " ";
-    }
-    return os;
-}
 
 #include "finder.hpp"
 
