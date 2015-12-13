@@ -18,6 +18,7 @@ int main() {
         v.at(i) = value;
     }
 
+    storage<float>::fill(v.size());
     storage<float> s = storage<float>(v);
 
     std::cin >> size;
