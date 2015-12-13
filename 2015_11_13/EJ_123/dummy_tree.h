@@ -36,13 +36,13 @@ struct tree {
         rmq_type pair = std::make_pair(depth, n->key);
         o.push_back(pair);
 
-        if (n->r != NULL) {
-            dfsvisit(n->r, depth + 1);
+        if (n->l != NULL) {
+            dfsvisit(n->l, depth + 1);
             o.push_back(pair);
         }
 
-        if (n->l != NULL) {
-            dfsvisit(n->l, depth + 1);
+        if (n->r != NULL) {
+            dfsvisit(n->r, depth + 1);
             o.push_back(pair);
         }
 
@@ -61,13 +61,12 @@ struct tree {
                 f[it->second] = it - o.begin();
         storage<rmq_type>::fill(o.size());
         s = storage<rmq_type>(o);
-        o.clear();
     }
 
-    int lca(const int& left, const int& right) const {
+    inline int lca(const int& left, const int& right) const {
         int l = std::min(f[left], f[right]);
         int r = std::max(f[left], f[right]);
-        return s.rmq(l, r).second;
+        return s.rmq(l, r + 1).second;
     }
 
 };
