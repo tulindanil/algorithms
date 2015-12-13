@@ -8,13 +8,14 @@
 
 #include "storage.h"
 
+using namespace dummy;
+
 template<typename T> 
 struct treap_node  {
     typedef treap_node<T>* node;
 
     T key;
     int priority;
-
     int size;
 
     node left;
@@ -59,9 +60,7 @@ struct treap {
 
     node root;
     
-    treap(): root(NULL) {
-
-    }
+    treap(): root(NULL) { }
     
     size_t count(const T& x) const;
     int size() const;
@@ -70,7 +69,11 @@ struct treap {
     bool insert(const T& x, const T& p = rand());
     bool erase(const T& x);
     
-    const T lca(const T& l, const T& r) const;
+    T lca(const T& l, const T& r) const;
+
+    void pop();
+    const T& top() const;
+    void push(const T& key, const int p);
 
     static node_pair treap_split(node v, const T& key, bool less = true);
     static node treap_merge(node left, node right);
@@ -102,6 +105,21 @@ void check(treap_node<T>* v)
 }
 
 template<typename T>
+void treap<T>::pop() {
+    erase(root->key);
+}
+
+template<typename T>
+void treap<T>::push(const T& key, const int p) {
+    insert(key, p);
+}
+
+template<typename T>
+const T& treap<T>::top() const {
+    return root->key;
+}
+
+template<typename T>
 void treap<T>::dfsvisit(const typename treap<T>::node n, size_t depth) {
     std::pair<size_t, T> pair = std::make_pair(depth, n->key);
     order.push_back(pair);
@@ -130,17 +148,13 @@ void treap<int>::hold() {
     for (typename order_type::const_iterator it = order.begin(); it != order.end(); ++it) {
         if (first[it->second] == -1)
             first[it->second] = it - order.begin();
-
-        std::cout << it->first << "-"  <<it->second  << " ";
     }
-    std::cout << std::endl;
-
     storage<rmq_type>::fill(order.size());
     s = storage<rmq_type>(order);
 }
 
 template<typename T> 
-const T treap<T>::lca(const T& l, const T& r) const {
+T treap<T>::lca(const T& l, const T& r) const {
     size_t l_index = std::min(first[l], first[r]);
     size_t r_index = std::max(first[l], first[r]);
     return s.rmq(l_index, r_index).second;
