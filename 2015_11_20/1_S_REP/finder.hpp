@@ -1,4 +1,7 @@
+#include <map>
 #include <set>
+#include <vector>
+
 class finder {
 
     public:
@@ -36,11 +39,6 @@ class finder {
             return set;
         }
 
-        friend std::ostream& operator <<(std::ostream& os, const finder& f) {
-            os << f.vertices.size();
-            return os;
-        }
-
     private:
 
         struct vertex;
@@ -66,11 +64,6 @@ class finder {
 
             }
 
-            friend std::ostream& operator <<(std::ostream& os, const vertex& v) {
-                os << "vertex" << std::endl;
-                os << v.neighbors << std::endl << v.move;
-                return os;
-            }
         };
 
         int getSuffixLink(int v) {
