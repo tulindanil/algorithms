@@ -12,7 +12,7 @@ void read(tree &t) {
     for (int i = 0; i < t.size - 1; ++i) {
         scanf("%d %d", &chd, &anc);
         if (v[anc] == NULL) {
-            std::cout << "v[anc] == NULL" << std::endl;
+            //std::cout << "v[anc] == NULL" << std::endl;
             abort();
         }
         if (v[chd] == NULL)
@@ -23,8 +23,8 @@ void read(tree &t) {
         else if (v[anc]->r == NULL)
             v[anc]->r = v[chd];
         else {
-            std::cout << chd << " " << anc << std::endl;
-            std::cout << "NOTNULL" << std::endl;
+            //std::cout << chd << " " << anc << std::endl;
+            //std::cout << "NOTNULL" << std::endl;
             abort();
         }
     }
