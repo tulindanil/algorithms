@@ -22,10 +22,12 @@ int main() {
     storage<float> s = storage<float>(v);
 
     std::cin >> size;
-    size_t fst, snd;
+    int fst, snd;
     for (size_t i = 0; i < size; ++i) {
-        std::cin >> fst >> snd;
-        std::cout << s.rmq(fst, snd) << std::endl;
+        //std::cin >> fst >> snd;
+        scanf("%d %d", &fst, &snd);
+        printf("%f\n", s.rmq(fst, snd));
+        //std::cout << s.rmq(fst, snd) << std::endl;
     }
 
     return 0;
