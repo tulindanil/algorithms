@@ -41,20 +41,26 @@ public:
 
     storage(std::vector<T> &v): data(&v), m(matrix(_log(v.size()) + 1)) {
         size_t size = v.size();
+        m.at(0) = v;
         for (size_t k = 1; k <= _log(size); ++k) {
-            m.at(k) = row((int)size - pow(k) + pow(k - 1) + 1);
+            m.at(k) = row((int)size - pow(k - 1) + 1);
             for (int i = 0; i <= (int)size - pow(k); ++i) {
                 m.at(k).at(i) = std::min(at(k - 1, i), at(k - 1, i + pow(k - 1)));
-                }
             }
+        }
     }
 
     inline const T& at(size_t row, size_t column) const {
-        if (row == 0) {
-            assert(data != NULL);
-            return data->at(column);
+        try {
+            //if (row == 0) {
+//                if (data == NULL)
+//                    std::cout << "data is nil" << std::endl, abort();
+            //    return data->at(column);
+           // }
+            return m.at(row).at(column);
+        } catch (std::exception& e) {
+            abort();
         }
-        return m.at(row).at(column);
     }
 
     inline T rmq(size_t begin, size_t end) const {
@@ -85,6 +91,16 @@ public:
 
     const T& operator[](size_t index) {
         return m[0][index];
+    }
+
+    template<class V> friend
+    std::ostream& operator<<(std::ostream& os, const storage<V>& s) {
+        os << "dummy::storage" << std::endl;
+//        os << *(s.data) << std::endl;
+        for (typename storage<V>::matrix::const_iterator it = s.m.begin(); it != s.m.end(); ++it) {
+            os << *it << std::endl;
+        }
+        return os;
     }
 
 private:
