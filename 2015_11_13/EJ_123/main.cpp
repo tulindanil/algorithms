@@ -2,11 +2,8 @@
 #include <stack>
 #include "dummy_tree.h"
 
-using dummy::tree;
-using dummy::node;
-
-void read(tree &t) {
-    std::vector<node::ref> v(t.size, NULL);
+void read(dummy::tree &t) {
+    std::vector<dummy::node::ref> v(t.size, NULL);
     v[0] = t.root;
     int anc, chd;
     for (int i = 0; i < t.size - 1; ++i) {
@@ -16,7 +13,7 @@ void read(tree &t) {
             abort();
         }
         if (v[chd] == NULL)
-            v[chd] = new node(chd);
+            v[chd] = new dummy::node(chd);
 
         if (v[anc]->l == NULL)
             v[anc]->l = v[chd];
@@ -33,7 +30,7 @@ void read(tree &t) {
 void work() { 
     size_t q = 0;
     std::cin >> q;
-    tree t(0, q + 1);
+    dummy::tree t(0, q + 1);
     read(t);
     t.hold();
     std::cin >> q;
