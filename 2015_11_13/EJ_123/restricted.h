@@ -13,16 +13,19 @@ public:
     storage(sequence& s): data(&s), block_size(log2(s.size) / 2), 
                           offsets(positions(pow(2, block_size - 1), -1)) {
         s.resize(s.size() + s.size() % block_size);
-        dummy::storage::hold(s.size());
+        dummy_sequence raw = dummy_sequence(s.size() / block_size);
+        dummy::storage::hold(raw.size());
+        build_pttrns(raw);
+        dummy = dummy::storage<dummy_t>(raw);
     }
 
-    inline T rmq(size_t l, size_t r) const {
+    inline std::pair(T, size_t) rmq(size_t l, size_t r) const {
         size_t l_blocked = (l + block_size - l % block_size) / block_size;
         size_t r_blocked = (r - r % block_size) / block_size;
-        dummy_t block_max = dummy.rmq(l_blocked, r_blocked);
-        T min = dummy_rmq(l, l + block_size - l % block_size);
+        std::pair<T, size_t> block_min = dummy.rmq(l_blocked, r_blocked),
+        min = std::min(block_min, dummy_rmq(l, l + block_size - l % block_size));
         min = std::min(min, dummy_rmq(r_blocked, r);
-        return min;
+        return std::make_pair(min, pos);
     }
 
 private:
@@ -31,7 +34,8 @@ private:
     typedef std::vector<bool> bits;
     typedef std::vector<block> pttrns;
 
-    typedef std::pair<T, size_t> dummy_t;
+    typedef std::pair<T, size_t> dummy_t
+    typedef std::vector<dummy_t> dummy_sequence;
     dummy::storage<dummy_t> dummy;
 
     sequence* data;
@@ -76,7 +80,7 @@ private:
         }
     }
 
-    void build_pttrns() {
+    void build_pttrns(dummy_sequence& s) {
         bits mask;
         int hash = 0;
         for (typename sequence::const_iterator it = data->begin();
@@ -84,10 +88,9 @@ private:
              ++it) {
             mask = getMask(it);
             hash = getHash(mask);
-
             if (pttrns[hash].offset == -1)
                 buildNewPttrn(pttrns[hash].offset, pttrns[hash].value,  mask);
-
+            s[it / block_size] = std::make_pair(*it + pttrns[hash].value, it - data->begin() + pttrns[hash].offset);
         }
     }
 
@@ -107,11 +110,11 @@ private:
         }
     }
 
-    inline T dummy_rmq(size_t l, size_t r) const {
+    inline std::pair<T, size_t> dummy_rmq(size_t l, size_t r) const {
         assert(data != NULL);
-        T min = T();
+        std::pair<T, size_t> min = std::make_pair(data->at(l), l);
         for (typename sequence::const_iterator it = data->begin() + l; it != data->begin() + r; ++it) {
-            min = std::min(min, *it);
+            min = std::min(min, std::make_pair(*it, it - (data->begin() + l)));
         }
         return min;
     }
