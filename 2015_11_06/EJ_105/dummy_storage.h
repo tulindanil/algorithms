@@ -47,7 +47,6 @@ public:
                 m.at(k).at(i) = std::min(at(k - 1, i), at(k - 1, i + pow(k - 1)));
                 }
             }
-        }
     }
 
     inline const T& at(size_t row, size_t column) const {
