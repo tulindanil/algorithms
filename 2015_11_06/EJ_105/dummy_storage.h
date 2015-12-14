@@ -40,19 +40,13 @@ public:
     }
 
     storage(std::vector<T> &v): data(&v), m(matrix(_log(v.size()) + 1)) {
-//        m.at(0) = v;
         size_t size = v.size();
-//        v.clear();
         for (size_t k = 1; k <= _log(size); ++k) {
             m.at(k) = row((int)size - pow(k) + pow(k - 1) + 1);
             for (int i = 0; i <= (int)size - pow(k); ++i) {
-//                try {
                 m.at(k).at(i) = std::min(at(k - 1, i), at(k - 1, i + pow(k - 1)));
-/*                } catch (std::exception &) {
-                    std::cout << size - pow(2, k) << " " << size - dummy::pow(k)  << std::endl;
-                    abort();
                 }
-*/            }
+            }
         }
     }
 
@@ -88,12 +82,7 @@ public:
             if (lim > size + 1)
                 lim = size + 1;
         }
-
- //       bins = new long long int[size];
- //       for (size_t i = 0; i < size; ++i) {
- //           bins[i] = pow(2, i);
- //       }
-    }
+   }
 
     const T& operator[](size_t index) {
         return m[0][index];
