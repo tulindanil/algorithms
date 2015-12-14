@@ -1,5 +1,6 @@
 #include <vector>
 #include "dummy_storage.h"
+#include "restricted.h"
 
 namespace dummy {
 
