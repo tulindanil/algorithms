@@ -1,6 +1,5 @@
 #include <iostream>
 #include <fstream>
-
 #include "finder.hpp"
 
 int main() {
