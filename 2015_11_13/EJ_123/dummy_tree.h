@@ -31,7 +31,7 @@ struct tree {
     ordered o;
     std::vector<int> f;
 
-    storage<rmq_type> s;
+    restricted::storage<rmq_type> s;
 
     void dfsvisit(node::ref n, int depth = 0) {
         rmq_type pair = std::make_pair(depth, n->key);
@@ -60,14 +60,27 @@ struct tree {
         for (ordered::const_iterator it = o.begin(); it != o.end(); ++it) 
             if (f[it->second] == -1)
                 f[it->second] = it - o.begin();
-        storage<rmq_type>::fill(o.size());
-        s = storage<rmq_type>(o);
+        s = restricted::storage<rmq_type>(o);
     }
 
     inline int lca(const int& left, const int& right) const {
         int l = std::min(f[left], f[right]);
         int r = std::max(f[left], f[right]);
-        return s.rmq(l, r + 1).second;
+        return s.rmq(l, r).first.second;
+    }
+
+    friend
+    std::ostream& operator <<(std::ostream& os, const tree& t) {
+        std::vector<int> vertecies;
+        for (std::vector<std::pair<int, int> >::const_iterator it = t.o.begin(); it != t.o.end(); ++it)
+            vertecies.push_back(it->second);
+        os << "tree:" << std::endl;
+        os << "\torder :";
+        os << vertecies << std::endl;
+        os << "\tfirst :";
+        os << t.f << std::endl;
+        os << t.s;
+        return os;
     }
 
 };

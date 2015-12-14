@@ -1,5 +1,23 @@
 #include <iostream>
-#include <stack>
+#include <vector>
+
+template<class V, class K>
+std::ostream& operator<<(std::ostream& os, const std::pair<K, V>& p) {
+    os << "{" << p.first << ", " << p.second << "}";
+    return os;
+}
+
+template<class T>
+std::ostream& operator<<(std::ostream& os, const std::vector<T>& v) {
+    os << "[";
+    for (typename std::vector<T>::const_iterator it = v.begin(); it != v.end(); ++it) {
+        bool isLast = (it == v.end() - 1);
+        os << *it << (isLast ? "]" : ", "); 
+    }
+    os << " " << v.size();
+    return os;
+}
+
 #include "dummy_tree.h"
 
 void read(dummy::tree &t) {
@@ -33,6 +51,7 @@ void work() {
     dummy::tree t(0, q + 1);
     read(t);
     t.hold();
+    std::cout << t << std::endl;
     std::cin >> q;
     int fst, snd;
     for (int i = 0; i < q; i++) {
