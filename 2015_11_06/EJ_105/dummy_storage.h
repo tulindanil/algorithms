@@ -93,8 +93,9 @@ public:
         return m[0][index];
     }
 
-    template<class V> friend
-    std::ostream& operator<<(std::ostream& os, const storage<V>& s) {
+#ifdef DEBUG
+    template<class V> 
+    friend std::ostream& operator<<(std::ostream& os, const storage<V>& s) {
         os << "dummy::storage" << std::endl;
 //        os << *(s.data) << std::endl;
         for (typename storage<V>::matrix::const_iterator it = s.m.begin(); it != s.m.end(); ++it) {
@@ -102,6 +103,7 @@ public:
         }
         return os;
     }
+#endif
 
 private:
 
