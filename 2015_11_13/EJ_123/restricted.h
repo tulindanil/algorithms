@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cmath>
+#include <algorithm>
 #include <cassert>
 
 namespace restricted {
@@ -133,7 +134,7 @@ private:
         assert(data != NULL);
         std::pair<T, long> min = std::make_pair(data->at(l), l);
         for (typename sequence::const_iterator it = data->begin() + l; it != data->begin() + r; ++it) {
-            min = std::min(min, std::make_pair(*it, it - (data->begin() + l)));
+            min = std::min(min, std::make_pair(*it, (long)(it - (data->begin() + l))));
         }
         return min;
     }
