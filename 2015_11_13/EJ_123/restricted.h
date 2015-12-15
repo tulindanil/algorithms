@@ -24,8 +24,8 @@ public:
     }
 
     inline std::pair<T, size_t> rmq(size_t l, size_t r) const {
-        size_t l_blocked = (l - 1 - ((l - 1) % block_size)) / block_size + 1;
-        size_t r_blocked = (r + 1 - ((r + 1) % block_size)) / block_size;
+        int l_blocked = (l - 1 - ((l - 1) % block_size)) / block_size + 1;
+        int r_blocked = (r + 1 - ((r + 1) % block_size)) / block_size;
         std::pair<T, size_t> min = dummy.rmq(l_blocked, r_blocked);
         if (l != l_blocked * block_size)
              min = std::min(min, dummy_rmq(l, l_blocked * block_size));
@@ -34,8 +34,8 @@ public:
         return min;
     }
 
-    friend
-    std::ostream& operator<<(std::ostream& os, const storage<T>& s) {
+#ifdef DEBUG
+    friend std::ostream& operator<<(std::ostream& os, const storage<T>& s) {
         os << "restricted: " << std::endl;
         os << "\tblock size: " << s.block_size << std::endl;
         os << "\traw: " << s.raw << std::endl;
@@ -43,6 +43,7 @@ public:
         os << s.dummy; 
         return os;
     }
+#endif
 
 private:
 
@@ -50,11 +51,12 @@ private:
         block(): offset(-1) { }
         int offset;
 
-        friend 
-        std::ostream& operator<<(std::ostream& os, const block& b) {
-            os << b.offset;
+#ifdef DEBUG
+        friend std::ostream& operator<<(std::ostream& os, const block& b) {
+            os << "block " << b.offset;
             return os;
         }
+#endif
     };
 
     typedef std::vector<bool> bits;
