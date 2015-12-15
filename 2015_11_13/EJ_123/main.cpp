@@ -1,6 +1,8 @@
 #include <iostream>
 #include <vector>
 
+#ifdef DEBUG
+
 template<class V, class K>
 std::ostream& operator<<(std::ostream& os, const std::pair<K, V>& p) {
     os << "{" << p.first << ", " << p.second << "}";
@@ -9,6 +11,8 @@ std::ostream& operator<<(std::ostream& os, const std::pair<K, V>& p) {
 
 template<class T>
 std::ostream& operator<<(std::ostream& os, const std::vector<T>& v) {
+    if (v.size() == 0)
+        return os;
     os << "[";
     for (typename std::vector<T>::const_iterator it = v.begin(); it != v.end(); ++it) {
         bool isLast = (it == v.end() - 1);
@@ -18,6 +22,8 @@ std::ostream& operator<<(std::ostream& os, const std::vector<T>& v) {
     return os;
 }
 
+#endif 
+
 #include "dummy_tree.h"
 
 void read(dummy::tree &t) {
@@ -26,23 +32,13 @@ void read(dummy::tree &t) {
     int anc, chd;
     for (int i = 0; i < t.size - 1; ++i) {
         scanf("%d %d", &chd, &anc);
-        if (v[anc] == NULL) {
-            //std::cout << "v[anc] == NULL" << std::endl;
-            abort();
-        }
         if (v[chd] == NULL)
             v[chd] = new dummy::node(chd);
-
         if (v[anc]->l == NULL)
             v[anc]->l = v[chd];
         else if (v[anc]->r == NULL)
             v[anc]->r = v[chd];
-        else {
-            //std::cout << chd << " " << anc << std::endl;
-            //std::cout << "NOTNULL" << std::endl;
-            abort();
-        }
-    }
+   }
 }
 
 void work() { 
@@ -51,7 +47,9 @@ void work() {
     dummy::tree t(0, q + 1);
     read(t);
     t.hold();
+#ifdef DEBUG
     std::cout << t << std::endl;
+#endif
     std::cin >> q;
     int fst, snd;
     for (int i = 0; i < q; i++) {
