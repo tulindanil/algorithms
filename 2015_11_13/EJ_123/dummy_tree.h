@@ -69,8 +69,8 @@ struct tree {
         return s.rmq(l, r).first.second;
     }
 
-    friend
-    std::ostream& operator <<(std::ostream& os, const tree& t) {
+#ifdef DEBUG
+    friend std::ostream& operator <<(std::ostream& os, const tree& t) {
         std::vector<int> vertecies;
         for (std::vector<std::pair<int, int> >::const_iterator it = t.o.begin(); it != t.o.end(); ++it)
             vertecies.push_back(it->second);
@@ -82,6 +82,7 @@ struct tree {
         os << t.s;
         return os;
     }
+#endif
 
 };
 
