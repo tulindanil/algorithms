@@ -48,7 +48,18 @@ public:
     inline size_t size() const {
         return list.size();
     }
+
+#ifdef DEBUG
+
+    friend std::ostream& operator <<(std::ostream& os, const graph& g) {
+        for (it i = g.list.begin(); i != g.list.end(); ++i) {
+            os << i - g.list.begin() << ": " << *i << std::endl;
+        }
+        return os;
+    }
     
+#endif
+
 private:
 
    container list;
