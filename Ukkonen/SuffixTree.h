@@ -5,9 +5,10 @@ class SuffixTree {
     public:
 
         void push_back(char nextChar) {
+            if (nextChar == '#')
+                divider = pttrn.length();
             fiction->to[nextChar] = root;
             pttrn.push_back(nextChar);
-
             Node *previousOne = nullptr;
             while (!canGo(nextChar)) {
                 if (pos != currentNode->right) {
@@ -25,13 +26,34 @@ class SuffixTree {
             jumpDown(pttrn.size() - 1, pttrn.size());
         }
 
+        void proceed() {
+            for (auto it: root->to) {
+                if (it.second == fiction) 
+                    continue;
+                it.second->proceed(pttrn, divider);
+            }
+        }
+
+        void solve(std::ostream& os, std::string& s) {
+            proceed();
+            
+            for (auto it: s) {
+
+            }
+        }
+
         long long count() {
             return root->count(pttrn.size());
         }
 
-        SuffixTree(): root(new Node(0, 0)), fiction(new Node(0, 0)), pos(0) {
-            currentNode = root;
+        SuffixTree(): root(new Node(0, 0)), currentNode(root), fiction(new Node(0, 0)), pos(0) {
             fiction->link = root->link = root->parent = fiction;
+        }
+
+        SuffixTree(const std::string& s): SuffixTree() {
+            for (auto it: s) {
+                push_back(it);
+            }
         }
 
         ~SuffixTree() {
@@ -39,9 +61,19 @@ class SuffixTree {
             delete fiction;
         }
 
+        friend std::ostream& operator <<(std::ostream& os, const SuffixTree& tree) {
+            for (auto it: tree.root->to) {
+                if (it.second == tree.fiction) 
+                    continue;
+                it.second->print(os, tree.pttrn);
+            }
+            return os;
+        }
+
     private:
 
-        Node *currentNode, *root, *fiction;
+        int divider;
+        Node *root, *currentNode, *fiction;
         int pos;
         std::string pttrn;
 
@@ -70,16 +102,16 @@ class SuffixTree {
         void jumpDown(int left, int right) {
             if (left >= right)
                 return;
+
             if (pos != currentNode->right) {
                 int diff = std::min(currentNode->right - pos, right - left);
                 pos += diff;
                 left += diff;
-                jumpDown(left, right);
-                return;
+            } else if (pos == currentNode->right) {
+                setCurrentNode(currentNode->to[pttrn[left]]);
+                setPos(std::min(currentNode->left + 1, currentNode->right));
+                ++left;
             }
-            setCurrentNode(currentNode->to[pttrn[left]]);
-            setPos(std::min(currentNode->left + 1, currentNode->right));
-            ++left;
             jumpDown(left, right);
         }
 
@@ -87,17 +119,18 @@ class SuffixTree {
             if (currentNode->right == pos && currentNode->link != nullptr) {
                 setCurrentNode(currentNode->link);
                 setPos(currentNode->right);
-                return;
+            } else {
+                int left = currentNode->left;
+                int right = pos;
+                setCurrentNode(currentNode->parent->link);
+                setPos(currentNode->right);
+                jumpDown(left, right);
             }
-            int left = currentNode->left;
-            int right = pos;
-            setCurrentNode(currentNode->parent->link);
-            setPos(currentNode->right);
-            jumpDown(left, right);
         }
 
         inline void addLeaf(int leftPosition) {
-            Node *leaf = new Node(leftPosition, __INT_MAX__);
+            Node *leaf = new Node(leftPosition, INT_MAX);
+            leaf->isLeaf = true;
             leaf->setParent(currentNode, pttrn[leftPosition]);
         }
 
