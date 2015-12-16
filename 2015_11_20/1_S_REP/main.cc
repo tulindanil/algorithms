@@ -4,14 +4,15 @@
 
 int main() {
     finder f;
-    std::string filepath;
-    std::getline(std::cin, filepath);
+    std::string filepath = "text.txt";
+//    std::getline(std::cin, filepath);
     size_t q = 0;
-    std::cin >> q;
+    std::fstream w("words.txt");
+    w >> q;
     std::string s;
-    std::getline(std::cin, s);
+    std::getline(w, s);
     for (int i = 0; i < q; i++) {
-        std::getline(std::cin, s);
+        std::getline(w, s);
         f.addPattern(s);
     }
     std::ifstream file(filepath);
