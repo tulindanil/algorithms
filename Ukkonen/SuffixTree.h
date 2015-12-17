@@ -36,9 +36,11 @@ class SuffixTree {
 
         void solve(std::ostream& os, std::string& s) {
             proceed();
-            
-            for (auto it: s) {
-
+            os << *this << std::endl;
+            Node* current = root;
+            for (typename std::string::const_iterator it = s.begin(); it != s.end(); ++it) {
+                os << it - s.begin() << " | " << root->to[*it]->length << " | " << *it << std::endl; 
+                current = current->link;
             }
         }
 
