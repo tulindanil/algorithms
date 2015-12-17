@@ -1,113 +1,100 @@
 #include <iostream>
-#include <istream>
-#include <set>
-#include <map>
-#include <vector>
+#include <stack>
+#include "dummy_graph.h"
 
-template <typename T, typename K>
-std::ostream &operator <<(std::ostream &os, const std::pair<T, K> &pair)
-{
-    os << "(" << pair.first << ", " << pair.second << ")";
-    return os;
-}
+class Solver {
 
-template <typename T>
-std::ostream &operator <<(std::ostream &os, const std::set<T> &set)
-{
-    for (typename std::set<T>::const_iterator it = set.begin(); it != set.end(); ++it)
-    {
-        os << *it << ", ";
-    }
-    return os;
-}
+public:
 
-template <typename T, typename K>
-std::ostream &operator <<(std::ostream &os, const std::map<T, K> &map)
-{
-    for (typename std::map<T, K>::const_iterator it = map.begin(); it != map.end(); ++it)
-    {
-        os << it->first << " " << it->second << "; ";
+    static void solve(std::istream& is, std::ostream& os) {
+        size_t vertices;
+        is >> vertices;
+        Solver s = Solver(vertices);
+        s.read(is);
+        os << s.solve();
     }
-    return os;
-}
 
-#include "Graph.hpp"
+private:
 
-template <typename T>
-std::istream &operator >>(std::istream &in, TGraph<T> &g)
-{
-    size_t vertices, edges;
-    
-    if (!(in >> vertices))
-    {
-        abort();
-    }
-    
-    if (!(in >> edges))
-    {
-        abort();
-    }
-    
-    for (size_t i = 0; i < edges; i++)
-    {
-        T src;
-        if (!(in >> src)){}
-        
-        g.AddVertex(src);
-        
-        T dst;
-        if (!(in >> dst)){}
-        
-        g.AddVertex(dst);
-        g.AddEdge(src, dst, 1);
-    }
-    
-    return in;
-}
+    typedef dummy::graph::it iterator;
+    typedef dummy::graph::edge_it edge_iterator;
 
-template <typename T>
-void work(TGraph<T> &g)
-{
-    typedef typename TGraph<T>::condensed_type condensed_type;
-    TGraph<condensed_type> condensation = g.condensation();
-    
-    std::set<condensed_type> sources, isolated;
-    for (typename TGraph<condensed_type>::TConstVertexIterator vertex_it = condensation.GetVerticesBegin(); vertex_it != condensation.GetVerticesEnd(); ++vertex_it)
-    {
-        sources.insert(*vertex_it);
-        isolated.insert(*vertex_it);
-    }
-    
-    for (typename TGraph<condensed_type>::TConstVertexIterator vertex_it = condensation.GetVerticesBegin(); vertex_it != condensation.GetVerticesEnd(); ++vertex_it)
-    {
-        if (condensation.GetVertexNeighboursBegin(*vertex_it) == condensation.GetVertexNeighboursEnd(*vertex_it))
-            sources.erase(sources.find(*vertex_it));
-        
-        for (typename TGraph<condensed_type>::TConstVertexIterator v = condensation.GetVerticesBegin(); v != condensation.GetVerticesEnd(); ++v)
-        {
-            for (typename TGraph<condensed_type>::TConstEdgeIterator edge = condensation.GetVertexNeighboursBegin(*v); edge != condensation.GetVertexNeighboursEnd(*v); ++edge)
-            {
-                isolated.erase(*vertex_it);
-                isolated.erase(edge->Destination);
-                
-                if (edge->Destination == *vertex_it)
-                {
-                    if (sources.find(*vertex_it) != sources.end())
-                        sources.erase(sources.find(*vertex_it));
-                    break;
-                }
+    dummy::graph graph, transposed;
+    std::vector<bool> hasAncestor;
+
+    std::vector<bool> isCovered; 
+
+    Solver(size_t size): graph(size), 
+                         transposed(size),
+                         isCovered(size, false),
+                         hasAncestor(size, false) { }
+
+    int solve() {
+        size_t count = 0;
+
+        for (iterator it = graph.begin(); it != graph.end(); ++it) {
+            size_t vertex = it - graph.begin();
+            if (!hasAncestor[vertex]) {
+                count++;
+                coverWithDFS(graph, vertex);
             }
         }
-    }
-    std::cout << sources.size() + isolated.size();
-}
 
-int main()
-{
-    
-    TGraph<int> g;
-    std::cin >> g;
-    work(g);
-    
-    return 0;
+        for (iterator it = graph.begin(); it != graph.end(); ++it) {
+            size_t vertex = it - graph.begin();
+            if (!isCovered[vertex]) {
+                count++;
+                coverWithDFS(transposed, coverWithDFS(graph, vertex));
+            }
+        }
+
+        return count;
+    }
+
+    int coverWithDFS(const dummy::graph& graph, int v) {
+        std::vector<bool> visited(graph.size(), false);
+        int vertex, latest = 0;
+
+        typedef std::pair<int, edge_iterator> position;
+
+        std::stack<position> stack;
+        stack.push(std::make_pair(v, graph.begin(v)));
+        isCovered[v] = true;
+        visited[v] = true;
+
+        while(!stack.empty()) {
+            vertex = stack.top().first;
+            if (stack.top().second == graph.end(vertex)) {
+                stack.pop();
+            } else {
+                int neighbour = *stack.top().second;
+                ++stack.top().second;
+                if (visited[neighbour])
+                    continue;
+                isCovered[neighbour] = true;
+                visited[neighbour] = true;
+                latest = neighbour;
+                stack.push(std::make_pair(neighbour, graph.begin(neighbour)));
+            }
+        }
+        return latest;
+    }
+
+    void read(std::istream& is) {
+        size_t edges;
+        is >> edges;
+        size_t from, to;
+        for (size_t i = 0; i < edges; ++i) {
+            is >> from >> to;
+            hasAncestor[to - 1] = true;
+            graph.addEdge(from - 1, to - 1);
+            transposed.addEdge(to - 1, from - 1);
+        }
+    }
+
+};
+
+int main() {
+   Solver::solve(std::cin, std::cout);
+   return 0;
 }
