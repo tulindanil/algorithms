@@ -5,8 +5,6 @@ class SuffixTree {
     public:
 
         void push_back(char nextChar) {
-            if (nextChar == '#')
-                divider = pttrn.length();
             fiction->to[nextChar] = root;
             pttrn.push_back(nextChar);
             Node *previousOne = nullptr;
@@ -26,22 +24,64 @@ class SuffixTree {
             jumpDown(pttrn.size() - 1, pttrn.size());
         }
 
-        void proceed() {
+        std::list<Result> proceed(const std::string& s) {
+            std::list<Result> results;
             for (auto it: root->to) {
-                if (it.second == fiction) 
-                    continue;
-                it.second->proceed(pttrn, divider);
+              if (it.second == fiction) 
+                 continue;
+              it.second->proceed(s, 0);
             }
-        }
 
-        void solve(std::ostream& os, std::string& s) {
-            proceed();
-            os << *this << std::endl;
             Node* current = root;
-            for (typename std::string::const_iterator it = s.begin(); it != s.end(); ++it) {
-                os << it - s.begin() << " | " << root->to[*it]->length << " | " << *it << std::endl; 
-                current = current->link;
+            Node* next = nullptr;
+            Result result;
+            size_t offset = 0, length = 0;
+            char ch = s[0];
+            for (auto it = s.begin(); it != s.end(); ++it) {
+                if (offset == 0) {
+                    if (current->to.count(*it) == 0) {
+                        if (current == root) {
+                            length = 0;
+                            next = nullptr;
+                        } else {
+                            length--;
+                            it--;
+                            current = current->link;
+                            next = next->link;
+                            continue;
+                        }
+                    } else {
+                        ch = *it;
+                        next = current->to[*it];
+                        offset++;
+                        length++;
+                    }
+                } else {
+                    size_t edge_length = next->right - next->left;
+                    if (next->getContent(pttrn)[offset] == *it) {
+                        length++;
+                        offset++;
+                        if (offset >= edge_length) {
+                           offset = 0;
+                           current = next;
+                           next = nullptr;
+                        }
+                    } else {
+                        if (current == root) {
+                            length = 0;
+                            next = nullptr;
+                        } else {
+                            length--;
+                            it--;
+                            current = current->link;
+                            next = current->to[ch];
+                            continue;
+                        }
+                    }
+               }
+               std::cout << length << " | " << current->matching + offset << std::endl;
             }
+            return results;
         }
 
         long long count() {
@@ -74,7 +114,6 @@ class SuffixTree {
 
     private:
 
-        int divider;
         Node *root, *currentNode, *fiction;
         int pos;
         std::string pttrn;
