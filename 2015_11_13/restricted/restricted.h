@@ -2,6 +2,7 @@
 #include <cmath>
 #include <algorithm>
 #include <cassert>
+#include <vector>
 
 namespace restricted {
 
@@ -25,14 +26,18 @@ public:
     }
 
     inline std::pair<T, size_t> rmq(size_t l, size_t r) const {
-        int l_blocked = (l - 1 - ((l - 1) % block_size)) / block_size + 1;
-        int r_blocked = (r + 1 - ((r + 1) % block_size)) / block_size;
-        std::pair<T, size_t> min = dummy.rmq(l_blocked, r_blocked);
-        if (l != l_blocked * block_size)
-             min = std::min(min, dummy_rmq(l, l_blocked * block_size));
-        if (r_blocked * block_size - 1 != r)
-            min = std::min(min, dummy_rmq(r_blocked * block_size - 1, r));
-        return min;
+        if (r - l >= block_size) {
+            int l_blocked = (l - 1 - ((l - 1) % block_size)) / block_size + 1;
+            int r_blocked = (r + 1 - ((r + 1) % block_size)) / block_size;
+            std::pair<T, size_t> min = dummy.rmq(l_blocked, r_blocked);
+            if (l != l_blocked * block_size)
+                 min = std::min(min, dummy_rmq(l, l_blocked * block_size));
+            if (r_blocked * block_size - 1 != r)
+                min = std::min(min, dummy_rmq(r_blocked * block_size - 1, r));
+            return min;
+        } else {
+            return dummy_rmq(l, r);
+        }
     }
 
 #ifdef DEBUG
