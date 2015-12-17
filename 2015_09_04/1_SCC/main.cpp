@@ -7,7 +7,7 @@
 #include <Graph.hpp>
 
 template<typename T>
-void readGraph(TGraph<T> &g, std::istream &in)
+void readGraph(graph<T> &g, std::istream &in)
 {
     size_t vertices, edges;
     
@@ -35,12 +35,12 @@ void readGraph(TGraph<T> &g, std::istream &in)
 };
 
 template <typename T>
-void strong(const TGraph<T> &g, const T &vertex, std::map<T, std::pair<std::pair<size_t, size_t>, bool>> &indexes, std::stack<T> &stack, std::set<std::set<T>> &stronglyConnected)
+void strong(const graph<T> &g, const T &vertex, std::map<T, std::pair<std::pair<size_t, size_t>, bool>> &indexes, std::stack<T> &stack, std::set<std::set<T>> &stronglyConnected)
 {
     indexes[vertex] = std::make_pair(std::make_pair(indexes.size(), indexes.size()), true);
     stack.push(vertex);
     
-    for (auto edge = g.GetVertexNeighboursBegin(vertex); edge != g.GetVertexNeighboursEnd(vertex); ++edge)
+    for (auto edge = g.begin(vertex); edge != g.end(vertex); ++edge)
     {
         if (indexes.find(edge->Destination) == indexes.end())
         {
@@ -72,13 +72,13 @@ void strong(const TGraph<T> &g, const T &vertex, std::map<T, std::pair<std::pair
 }
 
 template <typename T>
-std::set<std::set<T>> stronglyConnected(const TGraph<T> &g)
+std::set<std::set<T>> stronglyConnected(const graph<T> &g)
 {
     std::map<T, std::pair<std::pair<size_t, size_t>, bool>> indexes;
     std::set<std::set<T>> set;
     std::stack<T> stack;
     
-    for (typename TGraph<T>::TConstVertexIterator it = g.GetVerticesBegin(), endIt = g.GetVerticesEnd(); it != endIt; ++it)
+    for (typename graph<T>::const_iterator it = g.begin(), endIt = g.end(); it != endIt; ++it)
     {
         if (indexes.find(*it) == indexes.end())
             strong(g, *it, indexes, stack, set);
@@ -89,9 +89,7 @@ std::set<std::set<T>> stronglyConnected(const TGraph<T> &g)
 
 int main()
 {
-    freopen("input.txt", "r", stdin);
-    
-    TGraph<std::string> g;
+    graph<std::string> g;
     readGraph(g, std::cin);
     auto set = stronglyConnected(g);
     
